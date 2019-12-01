@@ -116,11 +116,12 @@ func GetFloat(obj interface{}) float64 {
 		if v == "" {
 			return 0.0
 		}
-		if n, err := strconv.ParseFloat(v, 64); err != nil {
+
+		n, err := strconv.ParseFloat(v, 64)
+		if err != nil {
 			return 0.0
-		} else {
-			return n
 		}
+		return n
 	default:
 		return 0.0
 	}

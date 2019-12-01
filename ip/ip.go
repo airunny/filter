@@ -60,29 +60,29 @@ func Ranges(ipCIDR ...string) ([]Range, error) {
 }
 
 func BytesOR(a, b []byte) (c []byte) {
-	g, l := a, b
-	if len(g) < len(l) {
-		g, l = l, g
+	if len(a) < len(b) {
+		a, b = b, a
 	}
 
-	lg := len(g)
-	ll := len(l)
-	gsl := lg - ll
+	la := len(a)
+	lb := len(b)
+	diff := la - lb
 
-	c = make([]byte, lg)
-	for i, _ := range g {
-		if i < gsl {
-			c[i] = g[i]
+	c = make([]byte, la)
+	for i := range a {
+		if i < diff {
+			c[i] = a[i]
 			continue
 		}
-		c[i] = l[i-gsl] | g[i]
+
+		c[i] = b[i-diff] | a[i]
 	}
 	return
 }
 
 func BytesNOT(a []byte) (b []byte) {
 	b = make([]byte, len(a))
-	for i, _ := range a {
+	for i := range a {
 		b[i] = ^a[i]
 	}
 	return
