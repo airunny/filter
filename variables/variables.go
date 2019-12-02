@@ -394,6 +394,7 @@ func (s *Get) Value(ctx context.Context, data interface{}, cache *cache.Cache) i
 			result = values[s.listIndex]
 		}
 	}
+
 	return result
 }
 
@@ -436,6 +437,7 @@ func (s *Data) Value(ctx context.Context, data interface{}, cache *cache.Cache) 
 	if v, ok := utils.GetObjectValueByKey(data, s.key); ok {
 		return v
 	}
+
 	return ""
 }
 
@@ -481,6 +483,7 @@ func (s *Calculator) Value(ctx context.Context, data interface{}, cache *cache.C
 
 		return 0
 	}))
+
 	return value
 }
 
@@ -511,6 +514,7 @@ func (s *FreqProfile) Value(ctx context.Context, data interface{}, cache *cache.
 
 		return freData
 	}
+
 	return ""
 }
 
@@ -544,6 +548,7 @@ func (s *Ctx) Value(ctx context.Context, data interface{}, cache *cache.Cache) i
 	if value, ok := variableData[s.key]; ok {
 		return value
 	}
+
 	return ""
 }
 
@@ -552,6 +557,7 @@ func CtxCreator(name string) Variable {
 	if key == "" {
 		return nil
 	}
+
 	return &Ctx{
 		name: name,
 		key:  key,

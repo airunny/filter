@@ -14,7 +14,7 @@ import (
 
 // ------------- base
 type Condition interface {
-	IsConditionOk(data interface{}, ctx context.Context, cache *cache.Cache) bool
+	IsConditionOk(context.Context, interface{}, *cache.Cache) bool
 }
 
 type BaseCondition struct {
@@ -23,7 +23,7 @@ type BaseCondition struct {
 	value     interface{}
 }
 
-func (s *BaseCondition) IsConditionOk(data interface{}, ctx context.Context, cache *cache.Cache) bool {
+func (s *BaseCondition) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) bool {
 	return s.operation.Run(ctx, s.variable, s.value, data, cache)
 }
 
@@ -58,11 +58,11 @@ func (s *GroupCondition) add(condition Condition) {
 	s.conditions = append(s.conditions, condition)
 }
 
-func (s *GroupCondition) IsConditionOk(data interface{}, ctx context.Context, cache *cache.Cache) bool {
+func (s *GroupCondition) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) bool {
 	result := true
 
 	for _, condition := range s.conditions {
-		if ok := condition.IsConditionOk(data, ctx, cache); ok {
+		if ok := condition.IsConditionOk(ctx, data, cache); ok {
 			if s.logic == LOGIC_OR {
 				result = true
 				break

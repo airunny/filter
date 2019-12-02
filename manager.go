@@ -6,6 +6,20 @@ import (
 	"sync/atomic"
 )
 
+const filterContextVariableKey = "filter.ctx.variable"
+
+func WithContext(ctx context.Context, data map[string]interface{}) context.Context {
+	return context.WithValue(ctx, filterContextVariableKey, data)
+}
+
+func FromContext(ctx context.Context) (map[string]interface{}, bool) {
+	data := ctx.Value(filterContextVariableKey)
+	if value, ok := data.(map[string]interface{}); ok {
+		return value, true
+	}
+	return nil, false
+}
+
 type Manger interface {
 	Execute(ctx context.Context, data interface{}) (ret interface{}, err error)
 	Refresh(ctx context.Context, jsonStr string) error

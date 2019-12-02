@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"math/rand"
 	"reflect"
 	"strconv"
 	"strings"
@@ -14,6 +15,52 @@ func FloatEquals(a, b float64) bool {
 	}
 
 	return false
+}
+
+type IWeight interface {
+	GetWeight() int64
+}
+
+func TotalWeight(weight []IWeight) int64 {
+	total := int64(0)
+
+	for _, v := range weight {
+		total += v.GetWeight()
+	}
+
+	return total
+}
+
+func PickByWeight(weight []IWeight, totalWeight int64) int {
+	if totalWeight == 0 {
+		totalWeight = TotalWeight(weight)
+	}
+
+	choose := rand.Int63n(totalWeight) + 1
+	line := int64(0)
+	for i, b := range weight {
+		line += b.GetWeight()
+		if choose <= line {
+			return i
+		}
+	}
+	return 0
+}
+
+func ShuffleByWeight(weight []IWeight, totalWeight int64) {
+	if len(weight) == 0 || len(weight) == 1 {
+		return
+	}
+
+	if totalWeight == 0 {
+		totalWeight = TotalWeight(weight)
+	}
+
+	for i := 0; i < len(weight); i++ {
+		index := i + PickByWeight(weight[i:], totalWeight)
+		weight[index], weight[i] = weight[i], weight[index]
+		totalWeight -= weight[index].GetWeight()
+	}
 }
 
 func GetObjectValueByKey(data interface{}, key string) (interface{}, bool) {
