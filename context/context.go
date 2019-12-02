@@ -10,7 +10,6 @@ type commonValueKeyType int
 const (
 	filterContextGeneralVariableKey commonValueKeyType = iota
 	filterContextCustomVariableKey
-	filterIDKey
 )
 
 type Values struct {
@@ -34,16 +33,6 @@ func WithContextValues(parent context.Context, value Values) context.Context {
 // custom values
 func WithContextCustom(ctx context.Context, data map[string]interface{}) context.Context {
 	return context.WithValue(ctx, filterContextCustomVariableKey, data)
-}
-
-// about filter
-func WithContextFilterID(parent context.Context, id string) context.Context {
-	return context.WithValue(parent, filterIDKey, id)
-}
-
-func FromContextFilterID(ctx context.Context) (string, bool) {
-	id, ok := ctx.Value(filterIDKey).(string)
-	return id, ok
 }
 
 func FromContextCustom(ctx context.Context) (map[string]interface{}, bool) {

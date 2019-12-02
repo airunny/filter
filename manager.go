@@ -2,23 +2,7 @@ package filter
 
 import (
 	"context"
-	"encoding/json"
-	"sync/atomic"
 )
-
-const filterContextVariableKey = "filter.ctx.variable"
-
-func WithContext(ctx context.Context, data map[string]interface{}) context.Context {
-	return context.WithValue(ctx, filterContextVariableKey, data)
-}
-
-func FromContext(ctx context.Context) (map[string]interface{}, bool) {
-	data := ctx.Value(filterContextVariableKey)
-	if value, ok := data.(map[string]interface{}); ok {
-		return value, true
-	}
-	return nil, false
-}
 
 type Manger interface {
 	Execute(ctx context.Context, data interface{}) (ret interface{}, err error)
@@ -36,26 +20,13 @@ func (rf ReportFunc) Report(ctx context.Context, version string, succ int, succI
 }
 
 // -------------
-type CommonConf struct {
-	JsonStr string
+type Config struct {
+	Filters map[string]SingleConfig `json:"filters"`
+	Version string                  `json:"version"`
 }
 
-type base struct {
-	val atomic.Value
-}
-
-type baseValuePair struct {
-	Cfg      *baseCfg
-	Reporter Reporter
-}
-
-type baseCfg struct {
-	M map[string]baseValues `json:"m"`
-	V string                `json:"version"`
-}
-
-type baseValues struct {
-	FilterData json.RawMessage `json:"filter_data"`
-	Weight     int64           `json:"weight"`
-	Priority   int64           `json:"priority"`
+type SingleConfig struct {
+	FilterData []interface{} `json:"filter_data"`
+	Weight     int64         `json:"weight"`
+	Priority   int64         `json:"priority"`
 }

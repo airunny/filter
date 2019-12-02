@@ -353,7 +353,7 @@ func ObjectCompare(compare, compared interface{}) int {
 		}
 
 		for i := 0; i < compareCount; i++ {
-			if ret := strings.Compare(targetCompare[1], targetCompared[i]); ret != 0 {
+			if ret := strings.Compare(targetCompare[i], targetCompared[i]); ret != 0 {
 				return ret
 			}
 		}

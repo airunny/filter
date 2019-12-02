@@ -100,7 +100,6 @@ func TestMain(m *testing.M) {
 	ctx = context.Background()
 	ctx = filterContext.WithContextValues(ctx, PrepayGeneralValues())
 	ctx = filterContext.WithContextCustom(ctx, PrepayCustomData())
-	ctx = filterContext.WithContextFilterID(ctx, "filter_id")
 
 	customData = &CustomData{
 		Name: "name",

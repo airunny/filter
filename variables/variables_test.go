@@ -132,7 +132,6 @@ func TestVariables(t *testing.T) {
 	ctx := context.Background()
 	ctx = filterContext.WithContextValues(ctx, PrepayGeneralValues())
 	ctx = filterContext.WithContextCustom(ctx, PrepayCustomData())
-	ctx = filterContext.WithContextFilterID(ctx, "filter_id")
 
 	now := time.Now()
 	tsSimple, _ := strconv.ParseUint(now.Format("20060102150405"), 10, 64)
