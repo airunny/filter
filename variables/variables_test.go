@@ -418,3 +418,12 @@ func TestVariables(t *testing.T) {
 		assert.Equal(t, true, v.Assert(variable.Value(ctx, customData, cacheService)), v.Name)
 	}
 }
+
+func TestCacheableVariable_Cacheable(t *testing.T) {
+	ret, err := Test(context.Background(), TestArgsFunc(Func1))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(ret)
+}

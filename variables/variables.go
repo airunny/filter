@@ -563,3 +563,22 @@ func CtxCreator(name string) Variable {
 		key:  key,
 	}
 }
+
+// ----------
+type ITest interface {
+	Run(ctx context.Context, id string) (string, error)
+}
+
+type TestArgsFunc func(ctx context.Context, id string) (string, error)
+
+func (f TestArgsFunc) Run(ctx context.Context, id string) (string, error) {
+	return f(ctx, id)
+}
+
+func Test(ctx context.Context, in ITest) (string, error) {
+	return in.Run(ctx, "1")
+}
+
+func Func1(ctx context.Context, id string) (string, error) {
+	return id, nil
+}

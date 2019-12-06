@@ -14,31 +14,20 @@ func (r Range) String() string {
 	return fmt.Sprintf("%v-%v", IntToIP(r.start), IntToIP(r.end))
 }
 
-func ToInt(address net.IP) (intP int) {
+func ToInt(address net.IP) int {
 	var ip1, ip2, ip3, ip4 int
 	_, _ = fmt.Sscanf(address.To4().String(), "%d.%d.%d.%d", &ip1, &ip2, &ip3, &ip4)
 	return ip1<<24 + ip2<<16 + ip3<<8 + ip4
 }
 
-func IntToIP(intP int) (address net.IP) {
+func IntToIP(intP int) net.IP {
 	var ip1, ip2, ip3, ip4 int
 	ip1 = intP & 0xFF000000
 	ip2 = intP & 0x00FF0000
 	ip3 = intP & 0x0000FF00
 	ip4 = intP & 0x000000FF
 
-	return net.ParseIP(fmt.Sprintf("%d.%d.%d.%d", ip1, ip2, ip3, ip4))
-}
-
-func InRange(rs []Range, ipAddress net.IP) bool {
-	intIP := ToInt(ipAddress)
-	for _, r := range rs {
-		if intIP >= r.start && intIP <= r.end {
-			return true
-		}
-	}
-
-	return false
+	return net.ParseIP(fmt.Sprintf("%d.%d.%d.%d", ip1>>24, ip2>>16, ip3>>8, ip4))
 }
 
 func Ranges(ipCIDR ...string) ([]Range, error) {
@@ -57,6 +46,17 @@ func Ranges(ipCIDR ...string) ([]Range, error) {
 	}
 
 	return ranges, nil
+}
+
+func InRange(rs []Range, ipAddress net.IP) bool {
+	intIP := ToInt(ipAddress)
+	for _, r := range rs {
+		if intIP >= r.start && intIP <= r.end {
+			return true
+		}
+	}
+
+	return false
 }
 
 func BytesOR(a, b []byte) (c []byte) {

@@ -64,10 +64,23 @@ func ShuffleByWeight(weight []IWeight, totalWeight int64) {
 }
 
 func GetObjectValueByKey(data interface{}, key string) (interface{}, bool) {
-	for _, seg := range strings.Split(key, ".") {
+	key = strings.TrimSpace(key)
+	if key == "." || key == "" {
+		return data, true
+	}
+
+	segs := strings.Split(key, ".")
+	if len(segs) <= 0 {
+		return data, true
+	}
+
+	for index := 0; index < len(segs); {
+		seg := segs[index]
+
 		if data == nil {
 			return nil, false
 		}
+		seg = strings.TrimSpace(seg)
 
 		switch reflect.TypeOf(data).Kind() {
 		case reflect.Map:
@@ -79,14 +92,14 @@ func GetObjectValueByKey(data interface{}, key string) (interface{}, bool) {
 				return nil, false
 			}
 
-		case reflect.Array:
-			v := data.([]interface{})
+		case reflect.Array, reflect.Slice:
+			value := reflect.ValueOf(data)
 			if i, err := strconv.Atoi(seg); err != nil {
 				return nil, false
-			} else if i < 0 || i >= len(v) {
+			} else if i < 0 || i >= value.Len() {
 				return nil, false
 			} else {
-				data = v[i]
+				data = value.Index(i).Interface()
 			}
 
 		case reflect.Struct:
@@ -98,16 +111,14 @@ func GetObjectValueByKey(data interface{}, key string) (interface{}, bool) {
 			data = f.Interface()
 
 		case reflect.Ptr:
-			value := reflect.ValueOf(data).Elem()
-			f := value.FieldByName(seg)
-			if !f.IsValid() {
-				return nil, false
-			}
-			data = f.Interface()
+			data = reflect.ValueOf(data).Elem().Interface()
+			continue
 
 		default:
 			return nil, false
 		}
+
+		index++
 	}
 	return data, true
 }

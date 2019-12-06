@@ -56,9 +56,17 @@ var numberTypes = map[reflect.Kind]bool{
 }
 
 func GetMyType(obj interface{}) MyType {
+	if obj == nil {
+		return NULL
+	}
+
 	kind := reflect.TypeOf(obj).Kind()
 	if _, ok := numberTypes[kind]; ok {
 		return NUMBER
+	}
+
+	if kind == reflect.Ptr {
+		kind = reflect.TypeOf(reflect.ValueOf(obj).Elem().Interface()).Kind()
 	}
 
 	switch kind {
@@ -73,6 +81,7 @@ func GetMyType(obj interface{}) MyType {
 	case reflect.Struct:
 		return STRUCT
 	}
+
 	return UNKNOWN
 }
 
