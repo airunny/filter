@@ -540,7 +540,7 @@ type Ctx struct {
 
 func (s *Ctx) GetName() string { return s.name }
 func (s *Ctx) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
-	variableData, ok := filterContext.FromContextCustom(ctx)
+	variableData, ok := filterContext.FromCustom(ctx)
 	if !ok {
 		return ""
 	}

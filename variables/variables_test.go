@@ -79,8 +79,8 @@ var (
 	_UserTags = []string{"tag1", "tag2"}
 )
 
-func PrepayGeneralValues() filterContext.Values {
-	return filterContext.Values{
+func PrepayGeneralValues() filterContext.CommonValue {
+	return filterContext.CommonValue{
 		UserID:    _UserID,
 		Referer:   _Referer,
 		Channel:   _Channel,
@@ -130,8 +130,8 @@ func TestVariables(t *testing.T) {
 	defer location.Close()
 
 	ctx := context.Background()
-	ctx = filterContext.WithContextValues(ctx, PrepayGeneralValues())
-	ctx = filterContext.WithContextCustom(ctx, PrepayCustomData())
+	ctx = filterContext.WithCommonValue(ctx, PrepayGeneralValues())
+	ctx = filterContext.WithCustom(ctx, PrepayCustomData())
 
 	now := time.Now()
 	tsSimple, _ := strconv.ParseUint(now.Format("20060102150405"), 10, 64)

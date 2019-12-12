@@ -2,22 +2,28 @@ package assignment
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/Liyanbing/filter"
 	"github.com/Liyanbing/filter/utils"
 
 	filterType "github.com/Liyanbing/filter/type"
 )
 
-var factory *Factory
+var Factory *factory
 
 func init() {
-	factory = &Factory{
+	Factory = &factory{
 		assignments: map[string]Assignment{
-			"=": &Equal{},
+			"=":      &Set{},
+			"+=":     &AddSet{},      // TODO
+			"*=":     &MultiplySet{}, // TODO
+			"/=":     &DivisionSet{}, // TODO
+			"merge":  &Merge{},
+			"delete": &Delete{},
 		},
 	}
 }
@@ -33,19 +39,19 @@ func (s *OriginValue) PrepareValue(ctx context.Context, value interface{}) (inte
 	return value, nil
 }
 
-type Factory struct {
+type factory struct {
 	assignments map[string]Assignment
 }
 
-func (s *Factory) Register(name string, ass Assignment) error {
+func (s *factory) Register(name string, ass Assignment) error {
 	if _, ok := s.assignments[name]; !ok {
-		return filter.ErrAlreadyExists
+		return fmt.Errorf("%v assignment already exists", name)
 	}
 
 	return nil
 }
 
-func (s *Factory) Get(name string) Assignment {
+func (s *factory) Get(name string) Assignment {
 	if assignment, ok := s.assignments[name]; ok {
 		return assignment
 	}
@@ -54,11 +60,12 @@ func (s *Factory) Get(name string) Assignment {
 }
 
 // -------- =
-type Equal struct{ OriginValue }
+type Set struct{ OriginValue }
 
-func (s *Equal) Run(ctx context.Context, data interface{}, key string, val interface{}) {
+func (s *Set) Run(ctx context.Context, data interface{}, key string, val interface{}) {
 	if setter, ok := data.(Setter); ok {
 		setter.AssignmentSet(key, val)
+		return
 	}
 
 	keys := strings.Split(key, ".")
@@ -72,6 +79,10 @@ func (s *Equal) Run(ctx context.Context, data interface{}, key string, val inter
 		}
 	}
 
+	if data == nil {
+		return
+	}
+
 	switch reflect.TypeOf(data).Kind() {
 	case reflect.Map:
 		dataValue := reflect.ValueOf(data)
@@ -81,7 +92,6 @@ func (s *Equal) Run(ctx context.Context, data interface{}, key string, val inter
 		index, err := strconv.ParseInt(key, 10, 32)
 		if err != nil {
 			return
-
 		}
 
 		if int(index) >= dataValue.Len() || index < 0 {
@@ -129,4 +139,159 @@ func setDataValue(data reflect.Value, value interface{}) {
 	}
 }
 
-// --------
+// -------- merge
+type Merge struct{}
+
+func (s *Merge) Run(ctx context.Context, data interface{}, key string, val interface{}) {
+	if merger, ok := data.(Merger); ok {
+		merger.AssignmentMerge(key, val)
+		return
+	}
+
+	originData := data
+	var ok bool
+	data, ok = utils.GetObjectValueByKey(data, key)
+	if !ok {
+		return
+	}
+
+	if data == nil {
+		Factory.Get("=").Run(ctx, originData, key, val)
+		return
+	}
+
+	switch reflect.TypeOf(data).Kind() {
+	case reflect.Map:
+		dataValue, ok := data.(map[string]interface{})
+		valueValue, ok1 := val.(map[string]interface{})
+		if ok && ok1 {
+			for key, value := range valueValue {
+				dataValue[key] = value
+			}
+		}
+
+	case reflect.Slice:
+		if reflect.TypeOf(val).Kind() == reflect.Slice {
+			dataValue := reflect.ValueOf(data)
+			valueValue := reflect.ValueOf(val)
+			for i := 0; i < valueValue.Len(); i++ {
+				dataValue = reflect.Append(dataValue, valueValue.Index(i))
+			}
+
+			Factory.Get("=").Run(ctx, originData, key, dataValue.Interface())
+		}
+	}
+}
+
+func (s *Merge) PrepareValue(ctx context.Context, value interface{}) (interface{}, error) {
+	if value == nil {
+		return nil, errors.New("assignment[merge] value must be hash or array")
+	}
+
+	t := reflect.TypeOf(value)
+	if t.Kind() != reflect.Map && t.Kind() != reflect.Array && t.Kind() != reflect.Slice {
+		return nil, errors.New("assignment[merge] value must be hash or array")
+	}
+
+	return value, nil
+}
+
+// ---------- delete
+type Delete struct{}
+
+func (s *Delete) Run(ctx context.Context, data interface{}, key string, val interface{}) {
+	if deleter, ok := data.(Deleter); ok {
+		deleter.AssignmentDelete(key, val)
+		return
+	}
+	originData := data
+
+	var ok bool
+	data, ok = utils.GetObjectValueByKey(data, key)
+	if !ok {
+		return
+	}
+
+	if data == nil {
+		return
+	}
+
+	switch reflect.TypeOf(data).Kind() {
+	case reflect.Map:
+		dataValue, ok := data.(map[string]interface{})
+		valueValue, ok1 := val.([]string)
+		if ok && ok1 {
+			for _, key := range valueValue {
+				delete(dataValue, key)
+			}
+		}
+
+	case reflect.Slice:
+		delIndexMap := make(map[int]struct{})
+
+		if intArray, ok := val.([]int); ok {
+			for _, delIndex := range intArray {
+				delIndexMap[delIndex] = struct{}{}
+			}
+		}
+
+		dataValue := reflect.ValueOf(data)
+		newArr := reflect.New(dataValue.Type()).Elem()
+		for index := 0; index < dataValue.Len(); index++ {
+			if _, ok := delIndexMap[index]; ok {
+				continue
+			}
+
+			newArr = reflect.Append(newArr, dataValue.Index(index))
+		}
+
+		Factory.Get("=").Run(ctx, originData, key, newArr.Interface())
+	}
+}
+
+func (s *Delete) PrepareValue(ctx context.Context, value interface{}) (interface{}, error) {
+	if value == nil {
+		return nil, errors.New("assignment[delete] value must be hash or array")
+	}
+
+	t := reflect.TypeOf(value)
+	kind := t.Kind()
+	if kind != reflect.Array && kind != reflect.Slice {
+		return nil, errors.New("assignment[delete] value must be int array or string array")
+	}
+
+	return value, nil
+}
+
+// ------- addSet
+type AddSet struct{}
+
+func (s *AddSet) Run(ctx context.Context, data interface{}, key string, val interface{}) {
+	return
+}
+
+func (s *AddSet) PrepareValue(ctx context.Context, value interface{}) (interface{}, error) {
+	return nil, nil
+}
+
+// ------- multiplySet
+type MultiplySet struct{}
+
+func (s *MultiplySet) Run(ctx context.Context, data interface{}, key string, val interface{}) {
+	return
+}
+
+func (s *MultiplySet) PrepareValue(ctx context.Context, value interface{}) (interface{}, error) {
+	return nil, nil
+}
+
+// --------- divisionSet
+type DivisionSet struct{}
+
+func (s *DivisionSet) Run(ctx context.Context, data interface{}, key string, val interface{}) {
+	return
+}
+
+func (s *DivisionSet) PrepareValue(ctx context.Context, value interface{}) (interface{}, error) {
+	return nil, nil
+}

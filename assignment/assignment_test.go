@@ -2,6 +2,7 @@ package assignment
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -22,6 +23,7 @@ type User struct {
 type Temp struct {
 	User  *User
 	Tests []string
+	Merge map[string]interface{}
 }
 
 func TestEqual_Run(t *testing.T) {
@@ -41,7 +43,6 @@ func TestEqual_Run(t *testing.T) {
 
 	mapData := map[string]interface{}{"user": structData, "name": "张三", "age": 18, "citys": []string{"1", "2"}, "ages": []int64{1, 2}}
 	arrayData := []interface{}{structData, 1, "2", []int{1, 2}, []string{"1", "2"}}
-	//arrayData1 := []string{"1", "2"}
 
 	cases := []struct {
 		Data     interface{}
@@ -298,9 +299,108 @@ func TestEqual_Run(t *testing.T) {
 				return structData.User.Works[0].WorkName
 			},
 		},
+		{
+			Data:     structData,
+			Key:      "Tests",
+			Value:    []string{"3", "4"},
+			Expected: []string{"3", "4"},
+			GotFunc: func() interface{} {
+				return structData.Tests
+			},
+		},
 	}
 
-	instance := &Equal{}
+	instance := &Set{}
+	for index, v := range cases {
+		prepayValue, err := instance.PrepareValue(context.Background(), v.Value)
+		assert.Equal(t, nil, err, index)
+		instance.Run(context.Background(), v.Data, v.Key, prepayValue)
+		if !reflect.DeepEqual(v.Expected, v.GotFunc()) {
+			t.Errorf("%v expected %v but got %v", index, v.Expected, v.GotFunc())
+		}
+	}
+}
+
+func TestMerge_Run(t *testing.T) {
+	data := &Temp{
+		Tests: []string{"1", "2"},
+		Merge: map[string]interface{}{"1": 1},
+	}
+
+	cases := []struct {
+		Data     interface{}
+		Key      string
+		Value    interface{}
+		Expected interface{}
+		GotFunc  func() interface{}
+	}{
+		{
+			Data:     data,
+			Key:      "Tests",
+			Value:    []string{"3", "4"},
+			Expected: []string{"1", "2", "3", "4"},
+			GotFunc: func() interface{} {
+				return data.Tests
+			},
+		},
+		{
+			Data:     data,
+			Key:      "Merge",
+			Value:    map[string]interface{}{"2": 2},
+			Expected: `{"1":1,"2":2}`,
+			GotFunc: func() interface{} {
+				str, _ := json.Marshal(data.Merge)
+				return string(str)
+			},
+		},
+	}
+
+	instance := &Merge{}
+	for index, v := range cases {
+		prepayValue, err := instance.PrepareValue(context.Background(), v.Value)
+		assert.Equal(t, nil, err, index)
+		instance.Run(context.Background(), v.Data, v.Key, prepayValue)
+		if !reflect.DeepEqual(v.Expected, v.GotFunc()) {
+			t.Errorf("%v expected %v but got %v", index, v.Expected, v.GotFunc())
+		}
+	}
+}
+
+func TestDelete_Run(t *testing.T) {
+	data := &Temp{
+		Tests: []string{"0", "1", "2", "3", "4", "5"},
+		Merge: map[string]interface{}{"1": 1, "2": 2, "3": 3, "4": 4, "5": 5},
+	}
+
+	cases := []struct {
+		Data     interface{}
+		Key      string
+		Value    interface{}
+		Expected interface{}
+		GotFunc  func() interface{}
+	}{
+		{
+			Data:     data,
+			Key:      "Tests",
+			Value:    []int{0, 2, 4, 6},
+			Expected: []string{"1", "3", "5"},
+			GotFunc: func() interface{} {
+				return data.Tests
+			},
+		},
+		{
+			Data:     data,
+			Key:      "Merge",
+			Value:    []string{"1", "3", "5", "7"},
+			Expected: `{"2":2,"4":4}`,
+			GotFunc: func() interface{} {
+				str, _ := json.Marshal(data.Merge)
+				return string(str)
+			},
+		},
+	}
+
+	instance := &Delete{}
 	for index, v := range cases {
 		prepayValue, err := instance.PrepareValue(context.Background(), v.Value)
 		assert.Equal(t, nil, err, index)

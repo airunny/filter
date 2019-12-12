@@ -117,7 +117,6 @@ func GetObjectValueByKey(data interface{}, key string) (interface{}, bool) {
 		default:
 			return nil, false
 		}
-
 		index++
 	}
 	return data, true

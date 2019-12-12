@@ -3,6 +3,8 @@ package cache
 import (
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var s *Cache
@@ -49,16 +51,7 @@ func TestCache_Set(t *testing.T) {
 	for _, v := range cases {
 		s.Set(v.Key, v.Value)
 		value, ok := s.Get(v.Key)
-		if !ok {
-			t.Logf("Get:%v not exists", v.Key)
-			return
-		}
-
-		var ret interface{}
-		ret = v.Value
-		if ret != value {
-			t.Logf("expected: %v but Got: %v", ret, value)
-			return
-		}
+		assert.Equal(t, true, ok)
+		assert.Equal(t, value, v.Value)
 	}
 }

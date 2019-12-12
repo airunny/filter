@@ -14,8 +14,3 @@ type Merger interface {
 type Deleter interface {
 	AssignmentDelete(key string, value interface{})
 }
-
-// increase value to data key failed
-type Increaser interface {
-	AssignmentIncrease(key string, value float64)
-}
