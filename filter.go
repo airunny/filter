@@ -29,18 +29,18 @@ func (s *Filter) SingleRun(data interface{}, ctx context.Context, cache *cache.C
 	return s.Run(ctx, data, cache)
 }
 
-func BuildFilter(filterData []interface{}) (*Filter, error) {
+func BuildFilter(ctx context.Context, filterData []interface{}) (*Filter, error) {
 	if len(filterData) < 2 {
 		return nil, errors.New("filterData struct mast contain at least 2 items")
 	}
 
 	filterCount := len(filterData)
-	filterCondition, err := condition.BuildCondition(filterData[:filterCount-1], condition.LOGIC_AND)
+	filterCondition, err := condition.BuildCondition(ctx, filterData[:filterCount-1], condition.LOGIC_AND)
 	if err != nil {
 		return nil, err
 	}
 
-	filterExecutor, err := executor.BuildExecutor(filterData[filterCount-1:])
+	filterExecutor, err := executor.BuildExecutor(ctx, filterData[filterCount-1:])
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +68,11 @@ func (s *filterPack) GetPriority() int64 {
 }
 
 // ----------------
+type priorityBoundary struct {
+	NextPriorityStartIndex int
+	TotalWeights           int64
+}
+
 type GroupFilter struct {
 	filters          []*filterPack
 	priorityBoundary []priorityBoundary
@@ -81,10 +86,10 @@ func NewEmptyFilterGroup(batchMode bool) *GroupFilter {
 	}
 }
 
-func NewGroupFilterWithConfig(cnf *Config) (*GroupFilter, error) {
+func NewGroupFilterWithConfig(ctx context.Context, cnf *Config) (*GroupFilter, error) {
 	group := NewEmptyFilterGroup(false)
 	for filterID, filterCnf := range cnf.Filters {
-		singleFilter, err := BuildFilter(filterCnf.FilterData)
+		singleFilter, err := BuildFilter(ctx, filterCnf.FilterData)
 		if err != nil {
 			return nil, err
 		}
@@ -95,12 +100,7 @@ func NewGroupFilterWithConfig(cnf *Config) (*GroupFilter, error) {
 	return group, nil
 }
 
-type priorityBoundary struct {
-	NextPriorityStartIndex int
-	TotalWeights           int64
-}
-
-func (s *GroupFilter) Run(ctx context.Context, data interface{}, cache *cache.Cache) (successCount int, successID string) {
+func (s *GroupFilter) Run(ctx context.Context, data interface{}, cache *cache.Cache) (successNumber int, filterID string) {
 	if s.totalWeights > 0 {
 		filters := make([]utils.IWeight, 0, len(s.filters))
 		for _, filter := range s.filters {
@@ -123,8 +123,8 @@ func (s *GroupFilter) Run(ctx context.Context, data interface{}, cache *cache.Ca
 
 	for _, filter := range s.filters {
 		if filter.Filter.Run(ctx, data, cache) {
-			successID = filter.Id
-			successCount++
+			filterID = filter.Id
+			successNumber++
 			if !s.batchMode {
 				break
 			}
@@ -135,8 +135,8 @@ func (s *GroupFilter) Run(ctx context.Context, data interface{}, cache *cache.Ca
 
 func (s *GroupFilter) Add(filter *Filter, filterId string, priority int64, weight int64) {
 	s.filters = append(s.filters, &filterPack{
-		Id:       filterId,
 		Filter:   filter,
+		Id:       filterId,
 		Weight:   weight,
 		Priority: priority,
 	})
@@ -151,12 +151,12 @@ func (s *GroupFilter) Add(filter *Filter, filterId string, priority int64, weigh
 
 func (s *GroupFilter) locatePriorityBoundary() {
 	s.priorityBoundary = s.priorityBoundary[:0]
-	lastP := int64(0)
+	lastPriority := int64(0)
 	totalWeight := int64(0)
 
 	for index, filter := range s.filters {
 		if index != 0 {
-			if filter.Priority != lastP {
+			if filter.Priority != lastPriority {
 				s.priorityBoundary = append(s.priorityBoundary, priorityBoundary{
 					NextPriorityStartIndex: index,
 					TotalWeights:           totalWeight,
@@ -165,7 +165,7 @@ func (s *GroupFilter) locatePriorityBoundary() {
 			}
 		}
 		totalWeight += filter.GetWeight()
-		lastP = filter.Priority
+		lastPriority = filter.Priority
 	}
 
 	s.priorityBoundary = append(s.priorityBoundary, priorityBoundary{

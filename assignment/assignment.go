@@ -13,10 +13,10 @@ import (
 	filterType "github.com/Liyanbing/filter/type"
 )
 
-var Factory *factory
+var innerFactory *factory
 
 func init() {
-	Factory = &factory{
+	innerFactory = &factory{
 		assignments: map[string]Assignment{
 			"=":      &Set{},
 			"+=":     &AddSet{},      // TODO
@@ -26,6 +26,14 @@ func init() {
 			"delete": &Delete{},
 		},
 	}
+}
+
+func Register(name string, ass Assignment) error {
+	return innerFactory.Register(name, ass)
+}
+
+func Get(name string) Assignment {
+	return innerFactory.Get(name)
 }
 
 type Assignment interface {
@@ -39,6 +47,7 @@ func (s *OriginValue) PrepareValue(ctx context.Context, value interface{}) (inte
 	return value, nil
 }
 
+// ----------------
 type factory struct {
 	assignments map[string]Assignment
 }
@@ -156,7 +165,7 @@ func (s *Merge) Run(ctx context.Context, data interface{}, key string, val inter
 	}
 
 	if data == nil {
-		Factory.Get("=").Run(ctx, originData, key, val)
+		innerFactory.Get("=").Run(ctx, originData, key, val)
 		return
 	}
 
@@ -178,7 +187,7 @@ func (s *Merge) Run(ctx context.Context, data interface{}, key string, val inter
 				dataValue = reflect.Append(dataValue, valueValue.Index(i))
 			}
 
-			Factory.Get("=").Run(ctx, originData, key, dataValue.Interface())
+			innerFactory.Get("=").Run(ctx, originData, key, dataValue.Interface())
 		}
 	}
 }
@@ -245,7 +254,7 @@ func (s *Delete) Run(ctx context.Context, data interface{}, key string, val inte
 			newArr = reflect.Append(newArr, dataValue.Index(index))
 		}
 
-		Factory.Get("=").Run(ctx, originData, key, newArr.Interface())
+		innerFactory.Get("=").Run(ctx, originData, key, newArr.Interface())
 	}
 }
 

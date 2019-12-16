@@ -16,48 +16,57 @@ type Executor interface {
 }
 
 // ----------
-var Factory *factory
+type GenExecutor interface {
+	GenExecutor(context.Context, interface{}) (Executor, error)
+}
+
+var innerFactory *factory
 
 func init() {
-	Factory = &factory{
+	innerFactory = &factory{
 		genExecutors: map[string]GenExecutor{
-			"__set": &GroupSet{Name: "__set"},
+			"__set": &GroupSetter{Name: "__set"},
 		},
 	}
 }
 
+func Register(name string, genExecutor GenExecutor) error {
+	return innerFactory.Register(name, genExecutor)
+}
+
+func Get(name string) (GenExecutor, error) {
+	return innerFactory.Get(name)
+}
+
+// -------------
 type factory struct {
 	genExecutors map[string]GenExecutor
 }
 
 func (s *factory) Register(name string, genExecutor GenExecutor) error {
-	if _, ok := Factory.genExecutors[name]; ok {
+	if _, ok := s.genExecutors[name]; ok {
 		return fmt.Errorf("%v alrealdy exists", name)
 	}
 
-	Factory.genExecutors[name] = genExecutor
+	s.genExecutors[name] = genExecutor
 	return nil
 }
 
 func (s *factory) Get(name string) (GenExecutor, error) {
-	gen, ok := Factory.genExecutors[name]
+	gen, ok := s.genExecutors[name]
 	if !ok {
 		return nil, fmt.Errorf("%v gen executor out found", name)
 	}
 
 	return gen, nil
-
 }
 
-type GenExecutor interface {
-	GenExecutor(context.Context, interface{}) (Executor, error)
-}
-
-type GroupSet struct {
+// ------------
+type GroupSetter struct {
 	Name string
 }
 
-func (s *GroupSet) GenExecutor(ctx context.Context, value interface{}) (Executor, error) {
+func (s *GroupSetter) GenExecutor(ctx context.Context, value interface{}) (Executor, error) {
 	if !filterType.IsArray(value) {
 		return nil, fmt.Errorf("%v GenExecutor value must be array", s.Name)
 	}
@@ -145,11 +154,11 @@ func BuildExecutor(ctx context.Context, items []interface{}) (Executor, error) {
 		return nil, fmt.Errorf("executor 2nd item  %v is not string", items[1])
 	}
 
-	if genExecutor, ok := Factory.genExecutors[key]; ok {
+	if genExecutor, ok := innerFactory.genExecutors[key]; ok {
 		return genExecutor.GenExecutor(ctx, items[2])
 	}
 
-	assignFunc := assignment.Factory.Get(assignmentName)
+	assignFunc := assignment.Get(assignmentName)
 	if assignFunc == nil {
 		return nil, fmt.Errorf("BuildExecutor with invalid assignment [%s]", assignmentName)
 	}

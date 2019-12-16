@@ -56,10 +56,10 @@ func ShuffleByWeight(weight []IWeight, totalWeight int64) {
 		totalWeight = TotalWeight(weight)
 	}
 
-	for i := 0; i < len(weight); i++ {
-		index := i + PickByWeight(weight[i:], totalWeight)
-		weight[index], weight[i] = weight[i], weight[index]
-		totalWeight -= weight[index].GetWeight()
+	for curIndex := 0; curIndex < len(weight); curIndex++ {
+		chooseIndex := curIndex + PickByWeight(weight[curIndex:], totalWeight)
+		weight[chooseIndex], weight[curIndex] = weight[curIndex], weight[chooseIndex]
+		totalWeight -= weight[curIndex].GetWeight()
 	}
 }
 

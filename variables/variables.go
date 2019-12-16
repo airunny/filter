@@ -12,8 +12,8 @@ import (
 	"github.com/Liyanbing/filter/cache"
 	"github.com/Liyanbing/filter/location"
 	"github.com/Liyanbing/filter/utils"
-	"github.com/skOak/calc/compute"
-	"github.com/skOak/calc/variables"
+	"github.com/liyanbing/calc/compute"
+	"github.com/liyanbing/calc/variables"
 
 	filterContext "github.com/Liyanbing/filter/context"
 	filterType "github.com/Liyanbing/filter/type"

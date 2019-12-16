@@ -89,7 +89,7 @@ func (s *GroupCondition) IsConditionOk(ctx context.Context, data interface{}, ca
 }
 
 // --------------
-func BuildGroupCondition(items []interface{}, logic LOGIC) (Condition, error) {
+func BuildGroupCondition(ctx context.Context, items []interface{}, logic LOGIC) (Condition, error) {
 	group := NewGroupCondition(logic)
 
 	for _, item := range items {
@@ -97,7 +97,7 @@ func BuildGroupCondition(items []interface{}, logic LOGIC) (Condition, error) {
 			return nil, errors.New("condition item is not array")
 		}
 
-		subCondition, err := BuildCondition(item.([]interface{}), LOGIC_AND)
+		subCondition, err := BuildCondition(ctx, item.([]interface{}), LOGIC_AND)
 		if err != nil {
 			return nil, err
 		}
@@ -107,14 +107,14 @@ func BuildGroupCondition(items []interface{}, logic LOGIC) (Condition, error) {
 	return group, nil
 }
 
-func BuildCondition(items []interface{}, logic LOGIC) (Condition, error) {
+func BuildCondition(ctx context.Context, items []interface{}, logic LOGIC) (Condition, error) {
 	if len(items) == 0 {
 		return nil, errors.New("condition is empty")
 	}
 
 	// group
 	if filterType.IsArray(items[0]) {
-		return BuildGroupCondition(items, logic)
+		return BuildGroupCondition(ctx, items, logic)
 	}
 
 	if len(items) != 3 {
@@ -131,7 +131,7 @@ func BuildCondition(items []interface{}, logic LOGIC) (Condition, error) {
 			return nil, fmt.Errorf("group condition [%s] 3rd element is not array", key)
 		}
 
-		return BuildCondition(items[2].([]interface{}), logic)
+		return BuildCondition(ctx, items[2].([]interface{}), logic)
 	}
 
 	variable := variables.Factory.Get(key)
