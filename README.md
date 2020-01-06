@@ -332,3 +332,6 @@ ctx.xxx | 获取对应Context中的值 | 需要先注入的Context中
    vlte | 比较版本号是否小于或者等于 | 版本值为 xx.xx.xx
    iir | 判断IP是否在某个IP段中 | in ip range
    niir | 判断IP是否不在某个IP段中 | not in ip range 与iir 逻辑相反
+   
+   tips：操作符、运算符、以及赋值运算符如果不满足需求业务方可以按照自己的要求实现对应的接口然后注册之后即可
+   ## TODO 剩余文档后续补全
