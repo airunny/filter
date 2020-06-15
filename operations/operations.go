@@ -103,7 +103,7 @@ func GetVariableValue(ctx context.Context, v variables.Variable, data interface{
 func ParseTargetArrayValue(value interface{}) []interface{} {
 	var target []interface{}
 
-	switch filterType.GetMyType(value) {
+	switch filterType.GetFilterType(value) {
 	case filterType.STRING:
 		targetValue := value.(string)
 		values := strings.Split(targetValue, ",")
@@ -185,10 +185,8 @@ func (s *Match) Run(ctx context.Context, variable variables.Variable, value inte
 
 	if reg, ok := value.(*regexp.Regexp); ok {
 		return reg.MatchString(targetVariableValue)
-
 	} else if targetValue, ok := value.(string); ok {
 		return strings.Contains(strings.ToLower(targetVariableValue), targetValue)
-
 	}
 
 	return false
@@ -228,10 +226,8 @@ func (s *NotMatch) Run(ctx context.Context, variable variables.Variable, value i
 
 	if reg, ok := value.(*regexp.Regexp); ok {
 		return !reg.MatchString(targetVariableValue)
-
 	} else if targetValue, ok := value.(string); ok {
 		return !strings.Contains(strings.ToLower(targetVariableValue), targetValue)
-
 	}
 
 	return false
@@ -280,7 +276,6 @@ func (s *MatchAny) Run(ctx context.Context, variable variables.Variable, value i
 			if reg.MatchString(targetVariableValue) {
 				return true
 			}
-
 		} else if targetValue, ok := element.(string); ok {
 			if strings.Contains(strings.ToLower(targetVariableValue), targetValue) {
 				return true
@@ -474,13 +469,7 @@ type Any struct{}
 
 func (s *Any) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
 	variableValue := GetVariableValue(ctx, variable, data, cache)
-
-	targetVariableValue, ok := variableValue.(string)
-	if !ok {
-		return false
-	}
-
-	variableValueElements := ParseTargetArrayValue(targetVariableValue)
+	variableValueElements := ParseTargetArrayValue(variableValue)
 	targetValueElements, ok := value.([]interface{})
 	if !ok {
 		return false
@@ -512,22 +501,16 @@ type Has struct{}
 
 func (s *Has) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
 	variableValue := GetVariableValue(ctx, variable, data, cache)
-
-	targetVariableValue, ok := variableValue.(string)
-	if !ok {
-		return false
-	}
-
-	variableValueElements := ParseTargetArrayValue(targetVariableValue)
+	variableValueElements := ParseTargetArrayValue(variableValue)
 	targetValueElements, ok := value.([]interface{})
 	if !ok {
 		return false
 	}
 
-	for _, variableValueElement := range variableValueElements {
+	for _, valueElement := range targetValueElements {
 		has := false
-		for _, valueElement := range targetValueElements {
-			if filterType.ObjectCompare(variableValueElement, valueElement) == 0 {
+		for _, variableValueElement := range variableValueElements {
+			if filterType.ObjectCompare(valueElement, variableValueElement) == 0 {
 				has = true
 				break
 			}
@@ -537,13 +520,11 @@ func (s *Has) Run(ctx context.Context, variable variables.Variable, value interf
 			return false
 		}
 	}
-
 	return true
 }
 
 func (s *Has) PrepareValue(value interface{}) (interface{}, error) {
 	targetValues := ParseTargetArrayValue(value)
-
 	if len(targetValues) == 0 {
 		return nil, errors.New("[has] operation value must be greater than one element")
 	}
@@ -556,13 +537,7 @@ type None struct{}
 
 func (s *None) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
 	variableValue := GetVariableValue(ctx, variable, data, cache)
-
-	targetVariableValue, ok := variableValue.(string)
-	if !ok {
-		return false
-	}
-
-	variableValueElements := ParseTargetArrayValue(targetVariableValue)
+	variableValueElements := ParseTargetArrayValue(variableValue)
 	targetValueElements, ok := value.([]interface{})
 	if !ok {
 		return false
@@ -581,7 +556,6 @@ func (s *None) Run(ctx context.Context, variable variables.Variable, value inter
 
 func (s *None) PrepareValue(value interface{}) (interface{}, error) {
 	targetValues := ParseTargetArrayValue(value)
-
 	if len(targetValues) == 0 {
 		return nil, errors.New("[none] operation value must be greater than one element")
 	}
@@ -608,7 +582,7 @@ type VersionGreaterThanOrEqual struct{ BaseOperationPrepareValue }
 func (s *VersionGreaterThanOrEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
 	variableValue := GetVariableValue(ctx, variable, data, cache)
 
-	if version.Compare(filterType.GetString(variableValue), filterType.GetString(value)) != -1 {
+	if version.Compare(filterType.GetString(variableValue), filterType.GetString(value)) >= 0 {
 		return true
 	}
 
@@ -634,7 +608,7 @@ type VersionLessThanOrEqual struct{ BaseOperationPrepareValue }
 func (s *VersionLessThanOrEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
 	variableValue := GetVariableValue(ctx, variable, data, cache)
 
-	if version.Compare(filterType.GetString(variableValue), filterType.GetString(value)) == -1 {
+	if version.Compare(filterType.GetString(variableValue), filterType.GetString(value)) <= 0 {
 		return true
 	}
 
@@ -684,7 +658,6 @@ type NotInIPRange struct{}
 
 func (s *NotInIPRange) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
 	variableValue := GetVariableValue(ctx, variable, data, cache)
-
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
 		return false
