@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Liyanbing/filter/utils"
+	"github.com/liyanbing/filter/utils"
 
-	filterType "github.com/Liyanbing/filter/type"
+	filterType "github.com/liyanbing/filter/filter_type"
 )
 
 var innerFactory *factory
@@ -53,10 +53,10 @@ type factory struct {
 }
 
 func (s *factory) Register(name string, ass Assignment) error {
-	if _, ok := s.assignments[name]; !ok {
+	if _, ok := s.assignments[name]; ok {
 		return fmt.Errorf("%v assignment already exists", name)
 	}
-
+	s.assignments[name] = ass
 	return nil
 }
 

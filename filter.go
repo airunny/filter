@@ -5,10 +5,10 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/Liyanbing/filter/cache"
-	"github.com/Liyanbing/filter/condition"
-	"github.com/Liyanbing/filter/executor"
-	"github.com/Liyanbing/filter/utils"
+	"github.com/liyanbing/filter/cache"
+	"github.com/liyanbing/filter/condition"
+	"github.com/liyanbing/filter/executor"
+	"github.com/liyanbing/filter/utils"
 )
 
 type Filter struct {
@@ -31,7 +31,7 @@ func (s *Filter) SingleRun(data interface{}, ctx context.Context, cache *cache.C
 
 func BuildFilter(ctx context.Context, filterData []interface{}) (*Filter, error) {
 	if len(filterData) < 2 {
-		return nil, errors.New("filterData struct mast contain at least 2 items")
+		return nil, errors.New("filterData struct must contain at least 2 items")
 	}
 
 	filterCount := len(filterData)

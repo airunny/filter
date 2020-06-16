@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Liyanbing/filter/cache"
-	"github.com/Liyanbing/filter/operations"
-	"github.com/Liyanbing/filter/variables"
+	"github.com/liyanbing/filter/cache"
+	"github.com/liyanbing/filter/operations"
+	"github.com/liyanbing/filter/variables"
 
-	filterType "github.com/Liyanbing/filter/type"
+	filterType "github.com/liyanbing/filter/filter_type"
 )
 
 // ------------- base
@@ -63,6 +63,10 @@ func (s *GroupCondition) IsConditionOk(ctx context.Context, data interface{}, ca
 
 	for _, condition := range s.conditions {
 		if ok := condition.IsConditionOk(ctx, data, cache); ok {
+			if s.logic == LOGIC_AND {
+				continue
+			}
+
 			if s.logic == LOGIC_OR {
 				result = true
 				break
@@ -81,6 +85,10 @@ func (s *GroupCondition) IsConditionOk(ctx context.Context, data interface{}, ca
 			if s.logic == LOGIC_OR {
 				result = false
 				break
+			}
+
+			if s.logic == LOGIC_NOT {
+				continue
 			}
 		}
 	}
@@ -118,11 +126,11 @@ func BuildCondition(ctx context.Context, items []interface{}, logic LOGIC) (Cond
 	}
 
 	if len(items) != 3 {
-		return nil, errors.New("condition item must contains 3 elements")
+		return nil, errors.New("condition item must contains 3 element")
 	}
 
 	if !filterType.IsString(items[0]) {
-		return nil, fmt.Errorf("condition item 1st element[%g] is not string", items[0])
+		return nil, fmt.Errorf("condition item 1st element[%v] is not string", items[0])
 	}
 
 	key := items[0].(string)

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/Liyanbing/filter/cache"
+	"github.com/liyanbing/filter/cache"
 )
 
 type Manger interface {
@@ -43,11 +43,10 @@ type container struct {
 }
 
 func NewFilter(ctx context.Context, jsonStr string, reporter Reporter) (Manger, error) {
-	con, err := newContainerWithJSON(ctx, jsonStr)
+	con, err := newContainerWithJSON(ctx, jsonStr, reporter)
 	if err != nil {
 		return nil, err
 	}
-	con.reporter = reporter
 
 	filterValue := atomic.Value{}
 	filterValue.Store(con)
@@ -57,7 +56,7 @@ func NewFilter(ctx context.Context, jsonStr string, reporter Reporter) (Manger, 
 	}, nil
 }
 
-func newContainerWithJSON(ctx context.Context, jsonStr string) (*container, error) {
+func newContainerWithJSON(ctx context.Context, jsonStr string, reporter Reporter) (*container, error) {
 	var cnf Config
 	err := json.NewDecoder(strings.NewReader(jsonStr)).Decode(&cnf)
 	if err != nil {
@@ -71,7 +70,7 @@ func newContainerWithJSON(ctx context.Context, jsonStr string) (*container, erro
 
 	return &container{
 		filterGroup: filterGroup,
-		reporter:    nil,
+		reporter:    reporter,
 	}, nil
 }
 
@@ -98,7 +97,7 @@ func (s *manager) Execute(ctx context.Context, data interface{}) (interface{}, e
 }
 
 func (s *manager) Refresh(ctx context.Context, jsonStr string) error {
-	newCon, err := newContainerWithJSON(ctx, jsonStr)
+	newCon, err := newContainerWithJSON(ctx, jsonStr, nil)
 	if err != nil {
 		return err
 	}
@@ -112,6 +111,6 @@ func (s *manager) Refresh(ctx context.Context, jsonStr string) error {
 }
 
 func CheckConfig(ctx context.Context, jsonStr string) error {
-	_, err := newContainerWithJSON(ctx, jsonStr)
+	_, err := newContainerWithJSON(ctx, jsonStr, nil)
 	return err
 }

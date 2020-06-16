@@ -8,12 +8,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Liyanbing/filter/cache"
-	"github.com/Liyanbing/filter/ip"
-	"github.com/Liyanbing/filter/variables"
-	"github.com/Liyanbing/filter/version"
+	"github.com/liyanbing/filter/cache"
+	"github.com/liyanbing/filter/ip"
+	"github.com/liyanbing/filter/variables"
+	"github.com/liyanbing/filter/version"
 
-	filterType "github.com/Liyanbing/filter/type"
+	filterType "github.com/liyanbing/filter/filter_type"
 )
 
 type Operation interface {
@@ -81,25 +81,6 @@ func init() {
 	}
 }
 
-func GetVariableValue(ctx context.Context, v variables.Variable, data interface{}, cache *cache.Cache) interface{} {
-	if v == nil {
-		return ""
-	}
-
-	if v.Cacheable() {
-		if value, ok := cache.Get(v.GetName()); ok {
-			return value
-		}
-	}
-
-	value := v.Value(ctx, data, cache)
-	if v.Cacheable() {
-		cache.Set(v.GetName(), value)
-	}
-
-	return value
-}
-
 func ParseTargetArrayValue(value interface{}) []interface{} {
 	var target []interface{}
 
@@ -123,7 +104,7 @@ func ParseTargetArrayValue(value interface{}) []interface{} {
 type Equal struct{ BaseOperationPrepareValue }
 
 func (s *Equal) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	return filterType.ObjectCompare(variableValue, value) == 0
 }
@@ -132,7 +113,7 @@ func (s *Equal) Run(ctx context.Context, variable variables.Variable, value inte
 type NotEqual struct{ BaseOperationPrepareValue }
 
 func (s *NotEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	return filterType.ObjectCompare(variableValue, value) != 0
 }
@@ -141,7 +122,7 @@ func (s *NotEqual) Run(ctx context.Context, variable variables.Variable, value i
 type GreaterThan struct{ BaseOperationPrepareValue }
 
 func (s *GreaterThan) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	return filterType.ObjectCompare(variableValue, value) == 1
 }
@@ -150,7 +131,7 @@ func (s *GreaterThan) Run(ctx context.Context, variable variables.Variable, valu
 type GreaterThanEqual struct{ BaseOperationPrepareValue }
 
 func (s *GreaterThanEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	return filterType.ObjectCompare(variableValue, value) >= 0
 }
@@ -159,7 +140,7 @@ func (s *GreaterThanEqual) Run(ctx context.Context, variable variables.Variable,
 type LessThan struct{ BaseOperationPrepareValue }
 
 func (s *LessThan) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	return filterType.ObjectCompare(variableValue, value) == -1
 }
@@ -168,7 +149,7 @@ func (s *LessThan) Run(ctx context.Context, variable variables.Variable, value i
 type LessThanEqual struct{ BaseOperationPrepareValue }
 
 func (s *LessThanEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	return filterType.ObjectCompare(variableValue, value) <= 0
 }
@@ -177,7 +158,7 @@ func (s *LessThanEqual) Run(ctx context.Context, variable variables.Variable, va
 type Match struct{}
 
 func (s *Match) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
 		return false
@@ -218,7 +199,7 @@ func (s *Match) PrepareValue(value interface{}) (interface{}, error) {
 type NotMatch struct{}
 
 func (s *NotMatch) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
 		return false
@@ -259,7 +240,7 @@ func (s *NotMatch) PrepareValue(value interface{}) (interface{}, error) {
 type MatchAny struct{}
 
 func (s *MatchAny) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
@@ -325,7 +306,7 @@ func (s *MatchAny) PrepareValue(value interface{}) (interface{}, error) {
 type MatchNone struct{}
 
 func (s *MatchNone) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
@@ -392,7 +373,7 @@ func (s *MatchNone) PrepareValue(value interface{}) (interface{}, error) {
 type Between struct{}
 
 func (s *Between) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 	startAndEnd := value.([]interface{})
 
 	return filterType.ObjectCompare(variableValue, startAndEnd[0]) >= 0 && filterType.ObjectCompare(variableValue, startAndEnd[1]) <= 0
@@ -412,7 +393,7 @@ func (s *Between) PrepareValue(value interface{}) (interface{}, error) {
 type In struct{}
 
 func (s *In) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	if targetValues, ok := value.([]interface{}); ok {
 		for _, targetValue := range targetValues {
@@ -440,7 +421,7 @@ func (s *In) PrepareValue(value interface{}) (interface{}, error) {
 type NotIn struct{}
 
 func (s *NotIn) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	if targetValues, ok := value.([]interface{}); ok {
 		for _, targetValue := range targetValues {
@@ -468,7 +449,7 @@ func (s *NotIn) PrepareValue(value interface{}) (interface{}, error) {
 type Any struct{}
 
 func (s *Any) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 	variableValueElements := ParseTargetArrayValue(variableValue)
 	targetValueElements, ok := value.([]interface{})
 	if !ok {
@@ -500,7 +481,7 @@ func (s *Any) PrepareValue(value interface{}) (interface{}, error) {
 type Has struct{}
 
 func (s *Has) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 	variableValueElements := ParseTargetArrayValue(variableValue)
 	targetValueElements, ok := value.([]interface{})
 	if !ok {
@@ -536,7 +517,7 @@ func (s *Has) PrepareValue(value interface{}) (interface{}, error) {
 type None struct{}
 
 func (s *None) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 	variableValueElements := ParseTargetArrayValue(variableValue)
 	targetValueElements, ok := value.([]interface{})
 	if !ok {
@@ -567,7 +548,7 @@ func (s *None) PrepareValue(value interface{}) (interface{}, error) {
 type VersionGreaterThan struct{ BaseOperationPrepareValue }
 
 func (s *VersionGreaterThan) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	if version.Compare(filterType.GetString(variableValue), filterType.GetString(value)) == 1 {
 		return true
@@ -580,7 +561,7 @@ func (s *VersionGreaterThan) Run(ctx context.Context, variable variables.Variabl
 type VersionGreaterThanOrEqual struct{ BaseOperationPrepareValue }
 
 func (s *VersionGreaterThanOrEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	if version.Compare(filterType.GetString(variableValue), filterType.GetString(value)) >= 0 {
 		return true
@@ -593,7 +574,7 @@ func (s *VersionGreaterThanOrEqual) Run(ctx context.Context, variable variables.
 type VersionLessThan struct{ BaseOperationPrepareValue }
 
 func (s *VersionLessThan) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	if version.Compare(filterType.GetString(variableValue), filterType.GetString(value)) == -1 {
 		return true
@@ -606,7 +587,7 @@ func (s *VersionLessThan) Run(ctx context.Context, variable variables.Variable, 
 type VersionLessThanOrEqual struct{ BaseOperationPrepareValue }
 
 func (s *VersionLessThanOrEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	if version.Compare(filterType.GetString(variableValue), filterType.GetString(value)) <= 0 {
 		return true
@@ -619,7 +600,7 @@ func (s *VersionLessThanOrEqual) Run(ctx context.Context, variable variables.Var
 type InIPRange struct{}
 
 func (s *InIPRange) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
@@ -657,7 +638,7 @@ func (s *InIPRange) PrepareValue(value interface{}) (interface{}, error) {
 type NotInIPRange struct{}
 
 func (s *NotInIPRange) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
-	variableValue := GetVariableValue(ctx, variable, data, cache)
+	variableValue := variables.GetVariableValue(ctx, variable, data, cache)
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
 		return false

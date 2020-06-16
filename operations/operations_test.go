@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Liyanbing/filter/cache"
-	"github.com/Liyanbing/filter/location"
-	"github.com/Liyanbing/filter/variables"
+	"github.com/liyanbing/filter/cache"
+	"github.com/liyanbing/filter/location"
+	"github.com/liyanbing/filter/variables"
 	"github.com/stretchr/testify/assert"
 
-	filterContext "github.com/Liyanbing/filter/context"
+	filterContext "github.com/liyanbing/filter/filter_context"
 )
 
 const (

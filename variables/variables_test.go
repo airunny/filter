@@ -9,11 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Liyanbing/filter/cache"
-	"github.com/Liyanbing/filter/location"
+	"github.com/liyanbing/filter/cache"
 	"github.com/stretchr/testify/assert"
 
-	filterContext "github.com/Liyanbing/filter/context"
+	filterContext "github.com/liyanbing/filter/filter_context"
 )
 
 func TestCalculator_GetName(t *testing.T) {
@@ -26,34 +25,43 @@ func TestCalculator_GetName(t *testing.T) {
 			Ret: true,
 		},
 		{
-			Reg: "get.user{name}",
+			Reg: "get.user.name",
 			Ret: true,
 		},
 		{
-			Reg: "get.users{zhangsan}{name}",
+			Reg: "get.users.0.name",
 			Ret: true,
 		},
 		{
-			Reg: "get.users{zhangsan}[0]{name}",
+			Reg: "get.users.zhangsan.0.name",
 			Ret: true,
 		},
 		{
-			Reg: "get.user{name}[1]",
+			Reg: "get.user.name.1",
 			Ret: true,
 		},
 		{
-			Reg: "get.user[1]",
+			Reg: "get.user.1",
 			Ret: true,
 		},
 		{
-			Reg: "get.user[1]{name}",
+			Reg: "get.user.1.name",
+			Ret: true,
+		},
+		{
+			Reg: "get.user.1.name.1",
+			Ret: true,
+		},
+		{
+			Reg: "get.user.1.name.1.1.name.age",
 			Ret: true,
 		},
 	}
 
 	for _, v := range cases {
 		filter := getReg.FindStringSubmatch(v.Reg)
-		assert.Equal(t, 4, len(filter))
+		t.Log(filter)
+		assert.Equal(t, 2, len(filter))
 	}
 }
 
@@ -106,14 +114,14 @@ type CustomData struct {
 	Age  int    `json:"age"`
 }
 
-func (s *CustomData) CalcFactorGet(ctx context.Context, name string) (float64, error) {
-	fmt.Println("获取计算值：", name)
-	if name == "age" {
-		return float64(s.Age), nil
-	}
-
-	return 1, nil
-}
+//func (s *CustomData) CalcFactorGet(ctx filter_context.Context, name string) (float64, error) {
+//	fmt.Println("获取计算值：", name)
+//	if name == "age" {
+//		return float64(s.Age), nil
+//	}
+//
+//	return 1, nil
+//}
 
 func (s *CustomData) CalcFactorSet(ctx context.Context, name string, value float64) {
 	fmt.Println("计算设置：", name, value)
@@ -125,9 +133,9 @@ func (s *CustomData) FrequencyGet(ctx context.Context, name string) interface{} 
 }
 
 func TestVariables(t *testing.T) {
-	err := location.NewLocationWithDBFile("/Users/Leo/Desktop/GeoLite2-City/GeoLite2-City.mmdb")
-	assert.Equal(t, nil, err)
-	defer location.Close()
+	//err := location.NewLocationWithDBFile("/Users/Leo/Desktop/GeoLite2-City/GeoLite2-City.mmdb")
+	//assert.Equal(t, nil, err)
+	//defer location.Close()
 
 	ctx := context.Background()
 	ctx = filterContext.WithCommonValue(ctx, PrepayGeneralValues())
@@ -160,34 +168,34 @@ func TestVariables(t *testing.T) {
 				return v >= 1 && v <= 100
 			},
 		},
-		{
-			Variable: "ip",
-			Name:     "ip",
-			Assert: func(value interface{}) bool {
-				return value == _IP
-			},
-		},
-		{
-			Variable: "country",
-			Name:     "country",
-			Assert: func(value interface{}) bool {
-				return value == "中国"
-			},
-		},
-		{
-			Variable: "province",
-			Name:     "province",
-			Assert: func(value interface{}) bool {
-				return value == "浙江省"
-			},
-		},
-		{
-			Variable: "city",
-			Name:     "city",
-			Assert: func(value interface{}) bool {
-				return value == "杭州"
-			},
-		},
+		//{
+		//	Variable: "ip",
+		//	Name:     "ip",
+		//	Assert: func(value interface{}) bool {
+		//		return value == _IP
+		//	},
+		//},
+		//{
+		//	Variable: "country",
+		//	Name:     "country",
+		//	Assert: func(value interface{}) bool {
+		//		return value == "中国"
+		//	},
+		//},
+		//{
+		//	Variable: "province",
+		//	Name:     "province",
+		//	Assert: func(value interface{}) bool {
+		//		return value == "浙江省"
+		//	},
+		//},
+		//{
+		//	Variable: "city",
+		//	Name:     "city",
+		//	Assert: func(value interface{}) bool {
+		//		return value == "杭州"
+		//	},
+		//},
 		{
 			Variable: "timestamp",
 			Name:     "timestamp",
@@ -331,29 +339,29 @@ func TestVariables(t *testing.T) {
 			},
 		},
 		{
-			Variable: "get.user{name}",
-			Name:     "get.user{name}",
+			Variable: "get.user.name",
+			Name:     "get.user.name",
 			Assert: func(value interface{}) bool {
 				return value == "name"
 			},
 		},
 		{
-			Variable: "get.user{age}",
-			Name:     "get.user{age}",
+			Variable: "get.user.age",
+			Name:     "get.user.age",
 			Assert: func(value interface{}) bool {
 				return value == float64(18)
 			},
 		},
 		{
-			Variable: "get.list[0]",
-			Name:     "get.list[0]",
+			Variable: "get.list.0",
+			Name:     "get.list.0",
 			Assert: func(value interface{}) bool {
 				return value == float64(1)
 			},
 		},
 		{
-			Variable: "get.list[1]",
-			Name:     "get.list[1]",
+			Variable: "get.list.1",
+			Name:     "get.list.1",
 			Assert: func(value interface{}) bool {
 				return value == float64(2)
 			},
@@ -374,8 +382,8 @@ func TestVariables(t *testing.T) {
 			},
 		},
 		{
-			Variable: "calc.__age*__age",
-			Name:     "calc.__age*__age",
+			Variable: "calc.__age*__second",
+			Name:     "calc.__age*__second",
 			Assert: func(value interface{}) bool {
 				return value == float64(18*18)
 			},

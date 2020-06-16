@@ -3,23 +3,24 @@ package variables
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/Liyanbing/filter/cache"
-	"github.com/Liyanbing/filter/location"
-	"github.com/Liyanbing/filter/utils"
 	"github.com/liyanbing/calc/compute"
 	"github.com/liyanbing/calc/variables"
+	"github.com/liyanbing/filter/cache"
+	"github.com/liyanbing/filter/location"
+	"github.com/liyanbing/filter/utils"
 
-	filterContext "github.com/Liyanbing/filter/context"
-	filterType "github.com/Liyanbing/filter/type"
+	filterContext "github.com/liyanbing/filter/filter_context"
+	filterType "github.com/liyanbing/filter/filter_type"
 )
 
-var getReg = regexp.MustCompile(`^get.(.+?)(?:\{([^\}]+)\})?(?:\[(\d+)\])?$`)
+var getReg = regexp.MustCompile(`^get.(.+)`)
 
 type Variable interface {
 	Cacheable() bool
@@ -47,19 +48,6 @@ func simpleVariableCreator(instance Variable) Creator {
 	}
 }
 
-// --------------data getter and setter---------------
-type CalcFactorGetter interface {
-	CalcFactorGet(ctx context.Context, name string) (float64, error)
-}
-
-type CalcFactorSetter interface {
-	CalcFactorSet(ctx context.Context, name string, value float64)
-}
-
-type FrequencyGetter interface {
-	FrequencyGet(ctx context.Context, name string) interface{}
-}
-
 // ---------------factory--------------
 type factory struct {
 	creators map[string]Creator
@@ -80,16 +68,22 @@ func (s *factory) Get(name string) Variable {
 	return nil
 }
 
-func (s *factory) Register(name string, creator Creator) {
+func (s *factory) Register(name string, creator Creator) error {
+	if _, ok := s.creators[name]; ok {
+		return fmt.Errorf("%v variable already exists", name)
+	}
 	s.creators[name] = creator
+	return nil
 }
 
-func RegisterVariable(name string, creator Creator) {
-	Factory.Register(name, creator)
+func RegisterVariable(name string, creator Creator) error {
+	return Factory.Register(name, creator)
 }
 
-func RegisterVariableFunc(name string, vf FuncNoCache) {
-	Factory.Register(name, simpleVariableCreator(vf))
+var _ = RegisterVariable
+
+func RegisterVariableFunc(name string, vf FuncNoCache) error {
+	return Factory.Register(name, simpleVariableCreator(vf))
 }
 
 type FuncNoCache func(ctx context.Context, data interface{}, cache *cache.Cache) interface{}
@@ -112,40 +106,40 @@ var Factory = &factory{
 }
 
 func init() {
-	Factory.Register("success", simpleVariableCreator(&Success{}))
-	Factory.Register("rand", simpleVariableCreator(&Rand{}))
-	Factory.Register("ip", simpleVariableCreator(&IP{}))
-	Factory.Register("country", simpleVariableCreator(&Area{name: "country"}))
-	Factory.Register("province", simpleVariableCreator(&Area{name: "province"}))
-	Factory.Register("city", simpleVariableCreator(&Area{name: "city"}))
-	Factory.Register("timestamp", simpleVariableCreator(&Time{name: "timestamp"}))
-	Factory.Register("ts_simple", simpleVariableCreator(&Time{name: "ts_simple"}))
-	Factory.Register("second", simpleVariableCreator(&Time{name: "second"}))
-	Factory.Register("minute", simpleVariableCreator(&Time{name: "minute"}))
-	Factory.Register("hour", simpleVariableCreator(&Time{name: "hour"}))
-	Factory.Register("day", simpleVariableCreator(&Time{name: "day"}))
-	Factory.Register("month", simpleVariableCreator(&Time{name: "month"}))
-	Factory.Register("year", simpleVariableCreator(&Time{name: "year"}))
-	Factory.Register("wday", simpleVariableCreator(&Time{name: "wday"}))
-	Factory.Register("date", simpleVariableCreator(&Time{name: "date"}))
-	Factory.Register("time", simpleVariableCreator(&Time{name: "time"}))
-	Factory.Register("ua", simpleVariableCreator(&UserAgent{}))
-	Factory.Register("referer", simpleVariableCreator(&Referer{}))
-	Factory.Register("is_login", simpleVariableCreator(&IsLogin{}))
-	Factory.Register("version", simpleVariableCreator(&Version{}))
-	Factory.Register("platform", simpleVariableCreator(&Platform{}))
-	Factory.Register("channel", simpleVariableCreator(&Channel{}))
-	Factory.Register("uid", simpleVariableCreator(&UID{}))
-	Factory.Register("device", simpleVariableCreator(&Device{}))
-	Factory.Register("user_tag", simpleVariableCreator(&UserTag{}))
-	Factory.Register("get.", GetCreator)
-	Factory.Register("data.", DataCreator)
-	Factory.Register("calc.", CalculatorCreator)
-	Factory.Register("freq.", FreqProfileCreator)
-	Factory.Register("ctx.", CtxCreator)
+	_ = Factory.Register("success", simpleVariableCreator(&Success{}))
+	_ = Factory.Register("rand", simpleVariableCreator(&Rand{}))
+	_ = Factory.Register("ip", simpleVariableCreator(&IP{}))
+	_ = Factory.Register("country", simpleVariableCreator(&Area{name: "country"}))
+	_ = Factory.Register("province", simpleVariableCreator(&Area{name: "province"}))
+	_ = Factory.Register("city", simpleVariableCreator(&Area{name: "city"}))
+	_ = Factory.Register("timestamp", simpleVariableCreator(&Time{name: "timestamp"}))
+	_ = Factory.Register("ts_simple", simpleVariableCreator(&Time{name: "ts_simple"}))
+	_ = Factory.Register("second", simpleVariableCreator(&Time{name: "second"}))
+	_ = Factory.Register("minute", simpleVariableCreator(&Time{name: "minute"}))
+	_ = Factory.Register("hour", simpleVariableCreator(&Time{name: "hour"}))
+	_ = Factory.Register("day", simpleVariableCreator(&Time{name: "day"}))
+	_ = Factory.Register("month", simpleVariableCreator(&Time{name: "month"}))
+	_ = Factory.Register("year", simpleVariableCreator(&Time{name: "year"}))
+	_ = Factory.Register("wday", simpleVariableCreator(&Time{name: "wday"}))
+	_ = Factory.Register("date", simpleVariableCreator(&Time{name: "date"}))
+	_ = Factory.Register("time", simpleVariableCreator(&Time{name: "time"}))
+	_ = Factory.Register("ua", simpleVariableCreator(&UserAgent{}))
+	_ = Factory.Register("referer", simpleVariableCreator(&Referer{}))
+	_ = Factory.Register("is_login", simpleVariableCreator(&IsLogin{}))
+	_ = Factory.Register("version", simpleVariableCreator(&Version{}))
+	_ = Factory.Register("platform", simpleVariableCreator(&Platform{}))
+	_ = Factory.Register("channel", simpleVariableCreator(&Channel{}))
+	_ = Factory.Register("uid", simpleVariableCreator(&UID{}))
+	_ = Factory.Register("device", simpleVariableCreator(&Device{}))
+	_ = Factory.Register("user_tag", simpleVariableCreator(&UserTag{}))
+	_ = Factory.Register("get.", GetCreator)
+	_ = Factory.Register("data.", DataCreator)
+	_ = Factory.Register("calc.", CalculatorCreator)
+	_ = Factory.Register("freq.", FreqProfileCreator)
+	_ = Factory.Register("ctx.", CtxCreator)
 }
 
-func GetVariableValue(v Variable, ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func GetVariableValue(ctx context.Context, v Variable, data interface{}, cache *cache.Cache) interface{} {
 	if v == nil {
 		return ""
 	}
@@ -169,7 +163,7 @@ func GetVariableValue(v Variable, ctx context.Context, data interface{}, cache *
 type Success struct{ CacheableVariable }
 
 func (s *Success) GetName() string { return "success" }
-func (s *Success) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Success) Value(_ context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	return 1
 }
 
@@ -177,7 +171,7 @@ func (s *Success) Value(ctx context.Context, data interface{}, cache *cache.Cach
 type Rand struct{ UnCacheableVariable }
 
 func (s *Rand) GetName() string { return "rand" }
-func (s *Rand) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Rand) Value(_ context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	return rand.Intn(100) + 1
 }
 
@@ -185,7 +179,7 @@ func (s *Rand) Value(ctx context.Context, data interface{}, cache *cache.Cache) 
 type IP struct{ CacheableVariable }
 
 func (s *IP) GetName() string { return "ip" }
-func (s *IP) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *IP) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	ip, _ := filterContext.IP(ctx)
 	return ip
 }
@@ -198,7 +192,7 @@ type Area struct {
 
 func (s *Area) GetName() string { return s.name }
 func (s *Area) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
-	ip := GetVariableValue(Factory.Get("ip"), ctx, data, cache).(string)
+	ip := GetVariableValue(ctx, Factory.Get("ip"), data, cache).(string)
 	country, province, city, err := location.GetLocation(ip)
 	if err != nil {
 		panic(err)
@@ -221,7 +215,7 @@ type Time struct {
 }
 
 func (s *Time) GetName() string { return s.name }
-func (s *Time) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Time) Value(_ context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	now := time.Now()
 
 	switch s.name {
@@ -255,7 +249,7 @@ func (s *Time) Value(ctx context.Context, data interface{}, cache *cache.Cache) 
 type UserAgent struct{ CacheableVariable }
 
 func (s *UserAgent) GetName() string { return "ua" }
-func (s *UserAgent) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *UserAgent) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	ua, _ := filterContext.UserAgent(ctx)
 	return ua
 }
@@ -264,7 +258,7 @@ func (s *UserAgent) Value(ctx context.Context, data interface{}, cache *cache.Ca
 type Referer struct{ CacheableVariable }
 
 func (s *Referer) GetName() string { return "referer" }
-func (s *Referer) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Referer) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	url, _ := filterContext.Referer(ctx)
 	return url
 }
@@ -273,8 +267,8 @@ func (s *Referer) Value(ctx context.Context, data interface{}, cache *cache.Cach
 type IsLogin struct{ CacheableVariable }
 
 func (s *IsLogin) GetName() string { return "is_login" }
-func (s *IsLogin) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
-	uid, _ := filterContext.UserAgent(ctx)
+func (s *IsLogin) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
+	uid, _ := filterContext.UserID(ctx)
 	if uid != "" {
 		return true
 	} else {
@@ -286,7 +280,7 @@ func (s *IsLogin) Value(ctx context.Context, data interface{}, cache *cache.Cach
 type Version struct{ CacheableVariable }
 
 func (s *Version) GetName() string { return "version" }
-func (s *Version) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Version) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	version, _ := filterContext.Version(ctx)
 	return version
 }
@@ -295,7 +289,7 @@ func (s *Version) Value(ctx context.Context, data interface{}, cache *cache.Cach
 type Platform struct{ CacheableVariable }
 
 func (s *Platform) GetName() string { return "platform" }
-func (s *Platform) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Platform) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	plt, _ := filterContext.Platform(ctx)
 	return plt
 }
@@ -304,7 +298,7 @@ func (s *Platform) Value(ctx context.Context, data interface{}, cache *cache.Cac
 type Channel struct{ CacheableVariable }
 
 func (s *Channel) GetName() string { return "channel" }
-func (s *Channel) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Channel) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	chl, _ := filterContext.Channel(ctx)
 	return chl
 }
@@ -313,7 +307,7 @@ func (s *Channel) Value(ctx context.Context, data interface{}, cache *cache.Cach
 type UID struct{ CacheableVariable }
 
 func (s *UID) GetName() string { return "uid" }
-func (s *UID) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *UID) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	uid, _ := filterContext.UserID(ctx)
 	return uid
 }
@@ -322,7 +316,7 @@ func (s *UID) Value(ctx context.Context, data interface{}, cache *cache.Cache) i
 type Device struct{ CacheableVariable }
 
 func (s *Device) GetName() string { return "device" }
-func (s *Device) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Device) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	device, _ := filterContext.Device(ctx)
 	return device
 }
@@ -331,7 +325,7 @@ func (s *Device) Value(ctx context.Context, data interface{}, cache *cache.Cache
 type UserTag struct{ CacheableVariable }
 
 func (s *UserTag) GetName() string { return "user_tag" }
-func (s *UserTag) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *UserTag) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	tags, _ := filterContext.UserTags(ctx)
 	return tags
 }
@@ -341,21 +335,19 @@ type Get struct {
 	CacheableVariable
 	name      string
 	paramName string
-	listMode  bool
-	listIndex int
-	jsonMode  bool
-	jsonKey   string
 }
 
 func (s *Get) GetName() string { return s.name }
-func (s *Get) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Get) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	var formValue string
 	values, ok := filterContext.Form(ctx)
-	if ok {
-		formValue = values.Get(s.paramName)
+
+	paramFilter := strings.Split(s.paramName, ".")
+	if ok && len(paramFilter) > 0 {
+		formValue = values.Get(paramFilter[0])
 	}
 
-	if formValue == "" || (!s.listMode && !s.jsonMode) {
+	if formValue == "" {
 		return formValue
 	}
 
@@ -364,62 +356,20 @@ func (s *Get) Value(ctx context.Context, data interface{}, cache *cache.Cache) i
 		return ""
 	}
 
-	if data == nil {
+	if v, ok := utils.GetObjectValueByKey(valueData, strings.TrimPrefix(s.paramName, paramFilter[0]+".")); ok {
+		return v
+	} else {
 		return ""
 	}
 
-	var result interface{}
-	if s.jsonMode {
-		if v, ok := utils.GetObjectValueByKey(valueData, s.jsonKey); ok {
-			result = v
-		} else {
-			return ""
-		}
-	}
-
-	if s.listMode {
-		tp := filterType.GetMyType(valueData)
-		if tp == filterType.STRING {
-			values := strings.Split(valueData.(string), ",")
-			if s.listIndex < 0 || s.listIndex >= len(values) {
-				return ""
-			}
-			result = values[s.listIndex]
-
-		} else if tp == filterType.ARRAY {
-			values := valueData.([]interface{})
-			if s.listIndex < 0 || s.listIndex >= len(values) {
-				return ""
-			}
-			result = values[s.listIndex]
-		}
-	}
-
-	return result
 }
 
 func GetCreator(name string) Variable {
-	if ma := getReg.FindStringSubmatch(name); len(ma) == 4 {
-		obj := &Get{
+	if ma := getReg.FindStringSubmatch(name); len(ma) == 2 {
+		return &Get{
 			name:      ma[0],
 			paramName: ma[1],
-			listMode:  false,
-			listIndex: 0,
-			jsonMode:  false,
-			jsonKey:   "",
 		}
-
-		if ma[2] != "" {
-			obj.jsonMode = true
-			obj.jsonKey = ma[2]
-		}
-
-		if ma[3] != "" {
-			obj.listMode = true
-			obj.listIndex, _ = strconv.Atoi(ma[3])
-		}
-
-		return obj
 	}
 
 	return nil
@@ -433,7 +383,7 @@ type Data struct {
 }
 
 func (s *Data) GetName() string { return s.name }
-func (s *Data) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Data) Value(_ context.Context, data interface{}, _ *cache.Cache) interface{} {
 	if v, ok := utils.GetObjectValueByKey(data, s.key); ok {
 		return v
 	}
@@ -473,17 +423,11 @@ func (s *Calculator) Value(ctx context.Context, data interface{}, cache *cache.C
 
 		variable := Factory.Get(name)
 		if variable != nil {
-			// record name&value in data if possible
-			v := filterType.GetFloat(variable.Value(ctx, data, cache))
-			if setter, ok := data.(CalcFactorSetter); ok {
-				setter.CalcFactorSet(ctx, name, v)
-			}
-			return v
+			return filterType.GetFloat(variable.Value(ctx, data, cache))
 		}
 
 		return 0
 	}))
-
 	return value
 }
 
@@ -508,7 +452,7 @@ type FreqProfile struct {
 }
 
 func (s *FreqProfile) GetName() string { return s.name }
-func (s *FreqProfile) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *FreqProfile) Value(ctx context.Context, data interface{}, _ *cache.Cache) interface{} {
 	if getter, ok := data.(FrequencyGetter); ok {
 		freData := getter.FrequencyGet(ctx, s.key)
 
@@ -539,7 +483,7 @@ type Ctx struct {
 }
 
 func (s *Ctx) GetName() string { return s.name }
-func (s *Ctx) Value(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+func (s *Ctx) Value(ctx context.Context, _ interface{}, _ *cache.Cache) interface{} {
 	variableData, ok := filterContext.FromCustom(ctx)
 	if !ok {
 		return ""
@@ -579,6 +523,6 @@ func Test(ctx context.Context, in ITest) (string, error) {
 	return in.Run(ctx, "1")
 }
 
-func Func1(ctx context.Context, id string) (string, error) {
+func Func1(_ context.Context, id string) (string, error) {
 	return id, nil
 }

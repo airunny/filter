@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Liyanbing/filter/cache"
-	"github.com/Liyanbing/filter/variables"
+	"github.com/liyanbing/filter/cache"
+	"github.com/liyanbing/filter/variables"
 	"github.com/stretchr/testify/assert"
 )
 

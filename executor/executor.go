@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/Liyanbing/filter/assignment"
+	"github.com/liyanbing/filter/assignment"
 
-	filterType "github.com/Liyanbing/filter/type"
+	filterType "github.com/liyanbing/filter/filter_type"
 )
 
 type Executor interface {
@@ -45,7 +45,7 @@ type factory struct {
 
 func (s *factory) Register(name string, genExecutor GenExecutor) error {
 	if _, ok := s.genExecutors[name]; ok {
-		return fmt.Errorf("%v alrealdy exists", name)
+		return fmt.Errorf("%v already exists", name)
 	}
 
 	s.genExecutors[name] = genExecutor
@@ -55,7 +55,7 @@ func (s *factory) Register(name string, genExecutor GenExecutor) error {
 func (s *factory) Get(name string) (GenExecutor, error) {
 	gen, ok := s.genExecutors[name]
 	if !ok {
-		return nil, fmt.Errorf("%v gen executor out found", name)
+		return nil, fmt.Errorf("%v gen executor not found", name)
 	}
 
 	return gen, nil
