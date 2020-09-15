@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Liyanbing/filter/utils"
+	"github.com/liyanbing/filter/utils"
 	"github.com/mohae/deepcopy"
 )
 

@@ -5,6 +5,7 @@ import (
 )
 
 func TestGetLocation(t *testing.T) {
+	t.Skip()
 	err := NewLocationWithDBFile("/Users/Leo/Desktop/GeoLite2-City/GeoLite2-City.mmdb")
 	if err != nil {
 		t.Errorf("NewLocationWithDBFile Error: %v", err)
