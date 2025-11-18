@@ -1,4 +1,4 @@
-package variables
+package time
 
 import (
 	"context"

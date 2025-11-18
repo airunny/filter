@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"math/rand"
 	"reflect"
 	"strconv"
@@ -63,7 +64,14 @@ func ShuffleByWeight(weight []IWeight, totalWeight int64) {
 	}
 }
 
-func GetObjectValueByKey(data interface{}, key string) (interface{}, bool) {
+func GetObjectValueByKey(ctx context.Context, data interface{}, key string) (interface{}, bool) {
+	type Valuer interface {
+		Value(ctx context.Context, key string) interface{}
+	}
+	if valuer, ok := data.(Valuer); ok {
+		return valuer.Value(ctx, key), true
+	}
+
 	key = strings.TrimSpace(key)
 	if key == "." || key == "" {
 		return data, true
@@ -109,7 +117,6 @@ func GetObjectValueByKey(data interface{}, key string) (interface{}, bool) {
 				return nil, false
 			}
 			data = f.Interface()
-
 		case reflect.Ptr:
 			data = reflect.ValueOf(data).Elem().Interface()
 			continue

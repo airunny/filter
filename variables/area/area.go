@@ -1,4 +1,4 @@
-package variables
+package area
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/liyanbing/filter/cache"
 	"github.com/liyanbing/filter/location"
+	"github.com/liyanbing/filter/variables"
+	"github.com/liyanbing/filter/variables/ip"
 )
 
 const (
@@ -13,6 +15,12 @@ const (
 	provinceName = "province"
 	cityName     = "city"
 )
+
+func init() {
+	variables.Register(variables.NewSimpleVariable(countryVariable()))
+	variables.Register(variables.NewSimpleVariable(provinceVariable()))
+	variables.Register(variables.NewSimpleVariable(cityVariable()))
+}
 
 func countryVariable() *Area {
 	return &Area{
@@ -34,18 +42,19 @@ func cityVariable() *Area {
 
 // Area 从IP中解析获取country信息
 type Area struct {
-	CacheableVariable
+	variables.CacheableVariable
 	name string
 }
 
 func (s *Area) Name() string { return s.name }
+
 func (s *Area) Value(ctx context.Context, data interface{}, cache *cache.Cache) (interface{}, error) {
-	variable, ok := Get(ipName)
+	variable, ok := variables.Get(ip.IPName)
 	if !ok {
 		return nil, errors.New("ip variable not found")
 	}
 
-	ip, err := GetVariableValue(ctx, variable, data, cache)
+	ip, err := variables.GetVariableValue(ctx, variable, data, cache)
 	if err != nil {
 		return nil, err
 	}

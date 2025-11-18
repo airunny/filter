@@ -1,4 +1,4 @@
-package variables
+package ip
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	filterContext "github.com/liyanbing/filter/context"
 )
 
-const ipName = "ip"
+const IPName = "ip"
 
 func ipVariable() *IP {
 	return &IP{}
@@ -17,7 +17,7 @@ func ipVariable() *IP {
 // IP 从上下文中获取IP地址
 type IP struct{ CacheableVariable }
 
-func (s *IP) Name() string { return ipName }
+func (s *IP) Name() string { return IPName }
 
 func (s *IP) Value(ctx context.Context, _ interface{}, _ *cache.Cache) (interface{}, error) {
 	ip, ok := filterContext.FromIP(ctx)

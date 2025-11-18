@@ -35,7 +35,6 @@ func (s *factory) Get(name string) Operation {
 	if value, ok := s.operations[name]; ok {
 		return value
 	}
-
 	return nil
 }
 
@@ -43,7 +42,6 @@ func Register(name string, operation Operation) error {
 	if _, ok := Factory.operations[name]; ok {
 		return errors.New(name + " operation already exists")
 	}
-
 	Factory.operations[name] = operation
 	return nil
 }

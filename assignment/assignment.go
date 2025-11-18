@@ -82,7 +82,7 @@ func (s *Set) Run(ctx context.Context, data interface{}, key string, val interfa
 		key = keys[len(keys)-1]
 
 		var ok bool
-		data, ok = utils.GetObjectValueByKey(data, strings.Join(keys[:len(keys)-1], "."))
+		data, ok = utils.GetObjectValueByKey(ctx, data, strings.Join(keys[:len(keys)-1], "."))
 		if !ok {
 			return
 		}
@@ -159,7 +159,7 @@ func (s *Merge) Run(ctx context.Context, data interface{}, key string, val inter
 
 	originData := data
 	var ok bool
-	data, ok = utils.GetObjectValueByKey(data, key)
+	data, ok = utils.GetObjectValueByKey(ctx, data, key)
 	if !ok {
 		return
 	}
@@ -216,7 +216,7 @@ func (s *Delete) Run(ctx context.Context, data interface{}, key string, val inte
 	originData := data
 
 	var ok bool
-	data, ok = utils.GetObjectValueByKey(data, key)
+	data, ok = utils.GetObjectValueByKey(ctx, data, key)
 	if !ok {
 		return
 	}

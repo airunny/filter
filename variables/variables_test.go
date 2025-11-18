@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/liyanbing/filter/cache"
 	filterContext "github.com/liyanbing/filter/context"
@@ -82,19 +85,12 @@ var (
 	_UserTags = []string{"tag1", "tag2"}
 )
 
-func PrepayCustomData() map[string]interface{} {
-	return map[string]interface{}{
-		"name": "name",
-		"age":  18,
-	}
-}
-
 type CustomData struct {
 	Name string `json:"name"`
 	Age  int    `json:"age"`
 }
 
-func (s *CustomData) CalcFactorGet(ctx context.Context, name string) (float64, error) {
+func (s *CustomData) CalcValue(ctx context.Context, name string) (float64, error) {
 	if name == "age" {
 		return float64(s.Age), nil
 	}
@@ -110,9 +106,21 @@ func (s *CustomData) CalcFactorSet(ctx context.Context, name string, value float
 	fmt.Println("计算设置：", name, value)
 }
 
-func (s *CustomData) FrequencyGet(ctx context.Context, name string) interface{} {
+func (s *CustomData) FrequencyValue(ctx context.Context, name string) interface{} {
 	fmt.Println("获取频率值：", name)
 	return s.Age
+}
+
+func (s *CustomData) Value(ctx context.Context, key string) interface{} {
+	fmt.Println("获取值：", key)
+	switch key {
+	case "Name":
+		return s.Name
+	case "Age":
+		return s.Age
+	default:
+		return nil
+	}
 }
 
 func TestVariables(t *testing.T) {
@@ -130,9 +138,11 @@ func TestVariables(t *testing.T) {
 	ctx = filterContext.WithUA(ctx, _UserAgent)
 	ctx = filterContext.WithReferer(ctx, _Referer)
 	ctx = filterContext.WithUserTag(ctx, _UserTags)
+	ctx = context.WithValue(ctx, "name", "name")
+	ctx = context.WithValue(ctx, "age", 18)
 
-	//now := time.Now()
-	//tsSimple, _ := strconv.ParseUint(now.Format("20060102150405"), 10, 64)
+	now := time.Now()
+	tsSimple, _ := strconv.ParseUint(now.Format("20060102150405"), 10, 64)
 	customData := &CustomData{
 		Name: "name",
 		Age:  18,
@@ -143,28 +153,28 @@ func TestVariables(t *testing.T) {
 		Name     string
 		Assert   func(value interface{}) bool
 	}{
-		//{
-		//	Variable: "success",
-		//	Name:     "success",
-		//	Assert: func(value interface{}) bool {
-		//		return value == 1
-		//	},
-		//},
-		//{
-		//	Variable: "rand",
-		//	Name:     "rand",
-		//	Assert: func(value interface{}) bool {
-		//		v := value.(int)
-		//		return v >= 1 && v <= 100
-		//	},
-		//},
-		//{
-		//	Variable: "ip",
-		//	Name:     "ip",
-		//	Assert: func(value interface{}) bool {
-		//		return value == _IP
-		//	},
-		//},
+		{
+			Variable: "success",
+			Name:     "success",
+			Assert: func(value interface{}) bool {
+				return value == 1
+			},
+		},
+		{
+			Variable: "rand",
+			Name:     "rand",
+			Assert: func(value interface{}) bool {
+				v := value.(int)
+				return v >= 1 && v <= 100
+			},
+		},
+		{
+			Variable: "ip",
+			Name:     "ip",
+			Assert: func(value interface{}) bool {
+				return value == _IP
+			},
+		},
 		//{
 		//	Variable: "country",
 		//	Name:     "country",
@@ -186,191 +196,163 @@ func TestVariables(t *testing.T) {
 		//		return value == "杭州"
 		//	},
 		//},
-		//{
-		//	Variable: "timestamp",
-		//	Name:     "timestamp",
-		//	Assert: func(value interface{}) bool {
-		//		return value == now.Unix()
-		//	},
-		//},
-		//{
-		//	Variable: "ts_simple",
-		//	Name:     "ts_simple",
-		//	Assert: func(value interface{}) bool {
-		//		return value == tsSimple
-		//	},
-		//},
-		//{
-		//	Variable: "second",
-		//	Name:     "second",
-		//	Assert: func(value interface{}) bool {
-		//		return value == now.Second()
-		//	},
-		//},
-		//{
-		//	Variable: "minute",
-		//	Name:     "minute",
-		//	Assert: func(value interface{}) bool {
-		//		return value == now.Minute()
-		//	},
-		//},
-		//{
-		//	Variable: "hour",
-		//	Name:     "hour",
-		//	Assert: func(value interface{}) bool {
-		//		return value == now.Hour()
-		//	},
-		//},
-		//{
-		//	Variable: "day",
-		//	Name:     "day",
-		//	Assert: func(value interface{}) bool {
-		//		return value == now.Day()
-		//	},
-		//},
-		//{
-		//	Variable: "month",
-		//	Name:     "month",
-		//	Assert: func(value interface{}) bool {
-		//		return value == int(now.Month())
-		//	},
-		//},
-		//{
-		//	Variable: "year",
-		//	Name:     "year",
-		//	Assert: func(value interface{}) bool {
-		//		return value == now.Year()
-		//	},
-		//},
-		//{
-		//	Variable: "wday",
-		//	Name:     "wday",
-		//	Assert: func(value interface{}) bool {
-		//		return value == int(now.Weekday())
-		//	},
-		//},
-		//{
-		//	Variable: "date",
-		//	Name:     "date",
-		//	Assert: func(value interface{}) bool {
-		//		return value == now.Format("2006-01-02")
-		//	},
-		//},
-		//{
-		//	Variable: "time",
-		//	Name:     "time",
-		//	Assert: func(value interface{}) bool {
-		//		return value == now.Format("2006-01-02 15:04:05")
-		//	},
-		//},
-		//{
-		//	Variable: "ua",
-		//	Name:     "ua",
-		//	Assert: func(value interface{}) bool {
-		//		return value == _UserAgent
-		//	},
-		//},
-		//{
-		//	Variable: "referer",
-		//	Name:     "referer",
-		//	Assert: func(value interface{}) bool {
-		//		return value == _Referer
-		//	},
-		//},
-		//{
-		//	Variable: "is_login",
-		//	Name:     "is_login",
-		//	Assert: func(value interface{}) bool {
-		//		return value == true
-		//	},
-		//},
-		//{
-		//	Variable: "version",
-		//	Name:     "version",
-		//	Assert: func(value interface{}) bool {
-		//		return value == _Version
-		//	},
-		//},
-		//{
-		//	Variable: "platform",
-		//	Name:     "platform",
-		//	Assert: func(value interface{}) bool {
-		//		return value == _Platform
-		//	},
-		//},
-		//{
-		//	Variable: "channel",
-		//	Name:     "channel",
-		//	Assert: func(value interface{}) bool {
-		//		return value == _Channel
-		//	},
-		//},
-		//{
-		//	Variable: "uid",
-		//	Name:     "uid",
-		//	Assert: func(value interface{}) bool {
-		//		return value == _UserID
-		//	},
-		//},
-		//{
-		//	Variable: "device",
-		//	Name:     "device",
-		//	Assert: func(value interface{}) bool {
-		//		return value == _Device
-		//	},
-		//},
-		//{
-		//	Variable: "user_tag",
-		//	Name:     "user_tag",
-		//	Assert: func(value interface{}) bool {
-		//		ut1 := strings.Join(_UserTags, ",")
-		//		ut2 := strings.Join(value.([]string), ",")
-		//		return ut1 == ut2
-		//	},
-		//},
-		//{
-		//	Variable: "get.user.name",
-		//	Name:     "get.user.name",
-		//	Assert: func(value interface{}) bool {
-		//		return value == "name"
-		//	},
-		//},
-		//{
-		//	Variable: "get.user.age",
-		//	Name:     "get.user.age",
-		//	Assert: func(value interface{}) bool {
-		//		return value == float64(18)
-		//	},
-		//},
-		//{
-		//	Variable: "get.list.0",
-		//	Name:     "get.list.0",
-		//	Assert: func(value interface{}) bool {
-		//		return value == float64(1)
-		//	},
-		//},
-		//{
-		//	Variable: "get.list.1",
-		//	Name:     "get.list.1",
-		//	Assert: func(value interface{}) bool {
-		//		return value == float64(2)
-		//	},
-		//},
-		//{
-		//	Variable: "data.Name",
-		//	Name:     "data.Name",
-		//	Assert: func(value interface{}) bool {
-		//		return value == "name"
-		//	},
-		//},
-		//{
-		//	Variable: "data.Age",
-		//	Name:     "data.Age",
-		//	Assert: func(value interface{}) bool {
-		//		return value == 18
-		//
-		//	},
-		//},
+		{
+			Variable: "timestamp",
+			Name:     "timestamp",
+			Assert: func(value interface{}) bool {
+				return value == now.Unix()
+			},
+		},
+		{
+			Variable: "ts_simple",
+			Name:     "ts_simple",
+			Assert: func(value interface{}) bool {
+				return value == tsSimple
+			},
+		},
+		{
+			Variable: "second",
+			Name:     "second",
+			Assert: func(value interface{}) bool {
+				return value == now.Second()
+			},
+		},
+		{
+			Variable: "minute",
+			Name:     "minute",
+			Assert: func(value interface{}) bool {
+				return value == now.Minute()
+			},
+		},
+		{
+			Variable: "hour",
+			Name:     "hour",
+			Assert: func(value interface{}) bool {
+				return value == now.Hour()
+			},
+		},
+		{
+			Variable: "day",
+			Name:     "day",
+			Assert: func(value interface{}) bool {
+				return value == now.Day()
+			},
+		},
+		{
+			Variable: "month",
+			Name:     "month",
+			Assert: func(value interface{}) bool {
+				return value == int(now.Month())
+			},
+		},
+		{
+			Variable: "year",
+			Name:     "year",
+			Assert: func(value interface{}) bool {
+				return value == now.Year()
+			},
+		},
+		{
+			Variable: "wday",
+			Name:     "wday",
+			Assert: func(value interface{}) bool {
+				return value == int(now.Weekday())
+			},
+		},
+		{
+			Variable: "date",
+			Name:     "date",
+			Assert: func(value interface{}) bool {
+				return value == now.Format("2006-01-02")
+			},
+		},
+		{
+			Variable: "time",
+			Name:     "time",
+			Assert: func(value interface{}) bool {
+				return value == now.Format("2006-01-02 15:04:05")
+			},
+		},
+		{
+			Variable: "ua",
+			Name:     "ua",
+			Assert: func(value interface{}) bool {
+				return value == _UserAgent
+			},
+		},
+		{
+			Variable: "referer",
+			Name:     "referer",
+			Assert: func(value interface{}) bool {
+				return value == _Referer
+			},
+		},
+		{
+			Variable: "is_login",
+			Name:     "is_login",
+			Assert: func(value interface{}) bool {
+				return value == true
+			},
+		},
+		{
+			Variable: "version",
+			Name:     "version",
+			Assert: func(value interface{}) bool {
+				return value == _Version
+			},
+		},
+		{
+			Variable: "platform",
+			Name:     "platform",
+			Assert: func(value interface{}) bool {
+				return value == _Platform
+			},
+		},
+		{
+			Variable: "channel",
+			Name:     "channel",
+			Assert: func(value interface{}) bool {
+				return value == _Channel
+			},
+		},
+		{
+			Variable: "uid",
+			Name:     "uid",
+			Assert: func(value interface{}) bool {
+				return value == _UserID
+			},
+		},
+		{
+			Variable: "device",
+			Name:     "device",
+			Assert: func(value interface{}) bool {
+				return value == _Device
+			},
+		},
+		{
+			Variable: "user_tag",
+			Name:     "user_tag",
+			Assert: func(value interface{}) bool {
+				ut1 := strings.Join(_UserTags, ",")
+				ut2 := strings.Join(value.([]string), ",")
+				return ut1 == ut2
+			},
+		},
+		{
+			Variable: "data.Name",
+			Name:     "data.Name",
+			Assert: func(value interface{}) bool {
+				return value == "name"
+			},
+		},
+		{
+			Variable: "data.Age",
+			Name:     "data.Age",
+			Assert: func(value interface{}) bool {
+				return value == 18
+
+			},
+		},
 		{
 			Variable: "calc.__age * __second",
 			Name:     "calc.__age * __second",
@@ -378,34 +360,34 @@ func TestVariables(t *testing.T) {
 				return value == float64(18*18)
 			},
 		},
-		//{
-		//	Variable: "calc.__age - __age",
-		//	Name:     "calc.__age - __age",
-		//	Assert: func(value interface{}) bool {
-		//		return value == float64(18-18)
-		//	},
-		//},
-		//{
-		//	Variable: "freq.uid.daily",
-		//	Name:     "freq.uid.daily",
-		//	Assert: func(value interface{}) bool {
-		//		return value == 18
-		//	},
-		//},
-		//{
-		//	Variable: "ctx.name",
-		//	Name:     "ctx.name",
-		//	Assert: func(value interface{}) bool {
-		//		return value == "name"
-		//	},
-		//},
-		//{
-		//	Variable: "ctx.age",
-		//	Name:     "ctx.age",
-		//	Assert: func(value interface{}) bool {
-		//		return value == 18
-		//	},
-		//},
+		{
+			Variable: "calc.__age - __age",
+			Name:     "calc.__age - __age",
+			Assert: func(value interface{}) bool {
+				return value == float64(18-18)
+			},
+		},
+		{
+			Variable: "freq.uid.daily",
+			Name:     "freq.uid.daily",
+			Assert: func(value interface{}) bool {
+				return value == 18
+			},
+		},
+		{
+			Variable: "ctx.name",
+			Name:     "ctx.name",
+			Assert: func(value interface{}) bool {
+				return value == "name"
+			},
+		},
+		{
+			Variable: "ctx.age",
+			Name:     "ctx.age",
+			Assert: func(value interface{}) bool {
+				return value == 18
+			},
+		},
 	}
 
 	cacheService := cache.NewCache()
@@ -417,7 +399,7 @@ func TestVariables(t *testing.T) {
 		name := variable.Name()
 		assert.Equal(t, v.Name, name, v.Name)
 		value, err := variable.Value(ctx, customData, cacheService)
-		assert.Nil(t, err)
+		assert.Nil(t, err, v.Name)
 		assert.Equal(t, true, v.Assert(value), v.Name)
 	}
 }

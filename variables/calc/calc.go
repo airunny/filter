@@ -1,13 +1,14 @@
-package variables
+package calc
 
 import (
 	"context"
 	"strings"
 
 	"github.com/liyanbing/calc/compute"
-	"github.com/liyanbing/calc/variables"
+	calcVariables "github.com/liyanbing/calc/variables"
 	"github.com/liyanbing/filter/cache"
 	filterType "github.com/liyanbing/filter/filter_type"
+	"github.com/liyanbing/filter/variables"
 )
 
 const calcName = "calc."
@@ -22,7 +23,7 @@ func (*calcBuilder) Name() string {
 	return calcName
 }
 
-func (*calcBuilder) Build(name string) Variable {
+func (*calcBuilder) Build(name string) *Calculator {
 	expr := strings.TrimPrefix(name, calcName)
 	if expr == "" {
 		return nil
@@ -36,7 +37,7 @@ func (*calcBuilder) Build(name string) Variable {
 
 // Calculator 计算器
 type Calculator struct {
-	UnCacheableVariable
+	variables.UnCacheableVariable
 	name string
 	expr string
 }
@@ -44,15 +45,15 @@ type Calculator struct {
 func (s *Calculator) Name() string { return s.name }
 
 func (s *Calculator) Value(ctx context.Context, data interface{}, cache *cache.Cache) (interface{}, error) {
-	return compute.Evaluate(s.expr, variables.ValueSourceFunc(func(name string) float64 {
-		if getter, ok := data.(CalcFactorGetter); ok {
-			v, err := getter.CalcFactorGet(ctx, name)
+	return compute.Evaluate(s.expr, calcVariables.ValueSourceFunc(func(name string) float64 {
+		if getter, ok := data.(variables.CalcFactorGetter); ok {
+			v, err := getter.CalcValue(ctx, name)
 			if err == nil {
 				return v
 			}
 		}
 
-		variable, ok := Get(name)
+		variable, ok := variables.Get(name)
 		if !ok {
 			return 0
 		}

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"math"
 	"reflect"
 	"testing"
@@ -395,7 +396,7 @@ func TestGetObjectValueByKey(t *testing.T) {
 	}
 
 	for index, v := range cases {
-		ret, ok := GetObjectValueByKey(v.Data, v.Key)
+		ret, ok := GetObjectValueByKey(context.Background(), v.Data, v.Key)
 		assert.Equal(t, v.OK, ok, index)
 		assert.Equal(t, true, reflect.DeepEqual(v.Expected, ret))
 	}

@@ -1,4 +1,4 @@
-package variables
+package freq
 
 import (
 	"context"
@@ -41,7 +41,7 @@ type FreqProfile struct {
 func (s *FreqProfile) Name() string { return s.name }
 func (s *FreqProfile) Value(ctx context.Context, data interface{}, _ *cache.Cache) (interface{}, error) {
 	if getter, ok := data.(FrequencyGetter); ok {
-		freData := getter.FrequencyGet(ctx, s.key)
+		freData := getter.FrequencyValue(ctx, s.key)
 		return freData, nil
 	}
 	return 0, nil

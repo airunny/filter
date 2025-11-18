@@ -1,4 +1,4 @@
-package variables
+package data
 
 import (
 	"context"
@@ -42,10 +42,10 @@ type Data struct {
 
 func (s *Data) Name() string { return s.name }
 
-func (s *Data) Value(_ context.Context, data interface{}, _ *cache.Cache) (interface{}, error) {
-	value, ok := utils.GetObjectValueByKey(data, s.key)
-	if ok {
-		return nil, fmt.Errorf("%s nont found in data", s.name)
+func (s *Data) Value(ctx context.Context, data interface{}, _ *cache.Cache) (interface{}, error) {
+	value, ok := utils.GetObjectValueByKey(ctx, data, s.key)
+	if !ok {
+		return nil, fmt.Errorf("%s not found in data", s.name)
 	}
 	return value, nil
 }
