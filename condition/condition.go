@@ -13,6 +13,7 @@ import (
 )
 
 // ------------- base
+
 type Condition interface {
 	IsConditionOk(context.Context, interface{}, *cache.Cache) bool
 }
@@ -28,6 +29,7 @@ func (s *BaseCondition) IsConditionOk(ctx context.Context, data interface{}, cac
 }
 
 // -------------- group
+
 type LOGIC int
 
 const (
@@ -83,8 +85,7 @@ func (s *GroupCondition) IsConditionOk(ctx context.Context, data interface{}, ca
 			}
 
 			if s.logic == LOGIC_OR {
-				result = false
-				break
+				continue
 			}
 
 			if s.logic == LOGIC_NOT {
@@ -92,11 +93,11 @@ func (s *GroupCondition) IsConditionOk(ctx context.Context, data interface{}, ca
 			}
 		}
 	}
-
 	return result
 }
 
 // --------------
+
 func BuildGroupCondition(ctx context.Context, items []interface{}, logic LOGIC) (Condition, error) {
 	group := NewGroupCondition(logic)
 
@@ -111,7 +112,6 @@ func BuildGroupCondition(ctx context.Context, items []interface{}, logic LOGIC) 
 		}
 		group.add(subCondition)
 	}
-
 	return group, nil
 }
 

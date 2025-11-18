@@ -16,19 +16,6 @@ type Filter struct {
 	executor  executor.Executor
 }
 
-func (s *Filter) Run(ctx context.Context, data interface{}, cache *cache.Cache) bool {
-	if !s.condition.IsConditionOk(ctx, data, cache) {
-		return false
-	}
-
-	s.executor.Execute(ctx, data)
-	return true
-}
-
-func (s *Filter) SingleRun(data interface{}, ctx context.Context, cache *cache.Cache) bool {
-	return s.Run(ctx, data, cache)
-}
-
 func BuildFilter(ctx context.Context, filterData []interface{}) (*Filter, error) {
 	if len(filterData) < 2 {
 		return nil, errors.New("filterData struct must contain at least 2 items")
@@ -49,6 +36,15 @@ func BuildFilter(ctx context.Context, filterData []interface{}) (*Filter, error)
 		condition: filterCondition,
 		executor:  filterExecutor,
 	}, nil
+}
+
+func (s *Filter) Run(ctx context.Context, data interface{}, cache *cache.Cache) bool {
+	if !s.condition.IsConditionOk(ctx, data, cache) {
+		return false
+	}
+
+	s.executor.Execute(ctx, data)
+	return true
 }
 
 // --------------
@@ -93,10 +89,8 @@ func NewGroupFilterWithConfig(ctx context.Context, cnf *Config) (*GroupFilter, e
 		if err != nil {
 			return nil, err
 		}
-
 		group.Add(singleFilter, filterID, filterCnf.Priority, filterCnf.Weight)
 	}
-
 	return group, nil
 }
 

@@ -381,15 +381,10 @@ func ObjectCompare(compare, compared interface{}) int {
 		return strings.Compare(GetString(compare), GetString(compared))
 	}
 
-	if compareType == STRING || comparedType == STRING {
-		return strings.Compare(GetString(compare), GetString(compared))
-	}
-
 	ok := reflect.DeepEqual(compare, compared)
 	if ok {
 		return 0
 	}
-
 	return 1
 }
 

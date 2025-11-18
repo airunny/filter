@@ -48,19 +48,24 @@ func Register(name string, operation Operation) error {
 	return nil
 }
 
-// ----------------
 var Factory *factory
 
 func init() {
 	Factory = &factory{
 		operations: map[string]Operation{
 			"=":       &Equal{},
+			"eq":      &Equal{},
 			"!=":      &NotEqual{},
 			"<>":      &NotEqual{},
+			"ne":      &NotEqual{},
 			">":       &GreaterThan{},
+			"gt":      &GreaterThan{},
 			">=":      &GreaterThanEqual{},
+			"gte":     &GreaterThanEqual{},
 			"<":       &LessThan{},
+			"lt":      &LessThan{},
 			"<=":      &LessThanEqual{},
+			"lte":     &LessThanEqual{},
 			"~":       &Match{},
 			"!~":      &NotMatch{},
 			"~*":      &MatchAny{},
@@ -83,7 +88,6 @@ func init() {
 
 func ParseTargetArrayValue(value interface{}) []interface{} {
 	var target []interface{}
-
 	switch filterType.GetFilterType(value) {
 	case filterType.STRING:
 		targetValue := value.(string)
@@ -91,16 +95,17 @@ func ParseTargetArrayValue(value interface{}) []interface{} {
 		for _, v := range values {
 			target = append(target, strings.TrimSpace(v))
 		}
-
 	case filterType.ARRAY:
 		target = value.([]interface{})
+	default:
+		target = append(target, value)
 	}
 	return target
 }
 
 //----------------------------------------------------------------------------------
 
-// =
+// Equal =/eq
 type Equal struct{ BaseOperationPrepareValue }
 
 func (s *Equal) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {
@@ -109,7 +114,7 @@ func (s *Equal) Run(ctx context.Context, variable variables.Variable, value inte
 	return filterType.ObjectCompare(variableValue, value) == 0
 }
 
-// != (<>)
+// NotEqual !=/<>/ne
 type NotEqual struct{ BaseOperationPrepareValue }
 
 func (s *NotEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) bool {

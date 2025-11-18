@@ -2,140 +2,88 @@ package context
 
 import (
 	"context"
-	"net/url"
 )
 
-type contextValueKeyType int
-
-const (
-	filterContextGeneralVariableKey contextValueKeyType = iota
-	filterContextCustomVariableKey
+type (
+	userIdKey   struct{}
+	deviceKey   struct{}
+	ipKey       struct{}
+	versionKey  struct{}
+	platformKey struct{}
+	channelKey  struct{}
+	uaKey       struct{}
+	refererKey  struct{}
+	userTagKey  struct{}
 )
 
-type CommonValue struct {
-	UserID    string     // 用户ID
-	Referer   string     // referer
-	Channel   string     // 渠道
-	UserAgent string     // user agent
-	IP        string     // ip
-	GetForm   url.Values // 请求体
-	Platform  string     // 平台
-	Device    string     // 设备
-	Version   string     // 版本
-	UserTags  []string   // 用户标签
+func WithUserID(ctx context.Context, userId interface{}) context.Context {
+	return context.WithValue(ctx, userIdKey{}, userId)
+}
+func FromUserId(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(userIdKey{}).(interface{})
+	return value, ok
 }
 
-// ----------- common values
-func WithCommonValue(parent context.Context, value CommonValue) context.Context {
-	return context.WithValue(parent, filterContextGeneralVariableKey, value)
+func WithDevice(ctx context.Context, device interface{}) context.Context {
+	return context.WithValue(ctx, deviceKey{}, device)
+}
+func FromDevice(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(deviceKey{}).(interface{})
+	return value, ok
 }
 
-func FromCommonValue(ctx context.Context) (CommonValue, bool) {
-	val, ok := ctx.Value(filterContextGeneralVariableKey).(CommonValue)
-	return val, ok
+func WithIP(ctx context.Context, ip interface{}) context.Context {
+	return context.WithValue(ctx, ipKey{}, ip)
+}
+func FromIP(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(ipKey{}).(interface{})
+	return value, ok
 }
 
-// ------------ custom values
-func WithCustom(ctx context.Context, data map[string]interface{}) context.Context {
-	return context.WithValue(ctx, filterContextCustomVariableKey, data)
+func WithVersion(ctx context.Context, version interface{}) context.Context {
+	return context.WithValue(ctx, versionKey{}, version)
+}
+func FromVersion(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(versionKey{}).(interface{})
+	return value, ok
 }
 
-func FromCustom(ctx context.Context) (map[string]interface{}, bool) {
-	data := ctx.Value(filterContextCustomVariableKey)
-	if value, ok := data.(map[string]interface{}); ok {
-		return value, true
-	}
-
-	return nil, false
+func WithPlatform(ctx context.Context, platform interface{}) context.Context {
+	return context.WithValue(ctx, platformKey{}, platform)
+}
+func FromPlatform(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(platformKey{}).(interface{})
+	return value, ok
 }
 
-// ----------
-func UserID(ctx context.Context) (string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return "", false
-	}
-
-	return val.UserID, val.UserID != ""
+func WithChannel(ctx context.Context, channel interface{}) context.Context {
+	return context.WithValue(ctx, channelKey{}, channel)
+}
+func FromChannel(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(channelKey{}).(interface{})
+	return value, ok
 }
 
-func Referer(ctx context.Context) (string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return "", false
-	}
-
-	return val.Referer, val.Referer != ""
+func WithUA(ctx context.Context, ua interface{}) context.Context {
+	return context.WithValue(ctx, uaKey{}, ua)
+}
+func FromUA(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(uaKey{}).(interface{})
+	return value, ok
 }
 
-func Channel(ctx context.Context) (string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return "", false
-	}
-
-	return val.Channel, val.Channel != ""
+func WithReferer(ctx context.Context, referer interface{}) context.Context {
+	return context.WithValue(ctx, refererKey{}, referer)
+}
+func FromReferer(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(refererKey{}).(interface{})
+	return value, ok
 }
 
-func UserAgent(ctx context.Context) (string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return "", false
-	}
-
-	return val.UserAgent, val.UserAgent != ""
+func WithUserTag(ctx context.Context, userTag interface{}) context.Context {
+	return context.WithValue(ctx, userTagKey{}, userTag)
 }
-
-func IP(ctx context.Context) (string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return "", false
-	}
-
-	return val.IP, val.IP != ""
-}
-
-func Form(ctx context.Context) (url.Values, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return nil, false
-	}
-
-	return val.GetForm, val.GetForm != nil
-}
-
-func Platform(ctx context.Context) (string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return "", false
-	}
-
-	return val.Platform, val.Platform != ""
-}
-
-func Device(ctx context.Context) (string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return "", false
-	}
-
-	return val.Device, val.Device != ""
-}
-
-func Version(ctx context.Context) (string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return "", false
-	}
-
-	return val.Version, val.Version != ""
-}
-
-func UserTags(ctx context.Context) ([]string, bool) {
-	val, ok := FromCommonValue(ctx)
-	if !ok {
-		return nil, false
-	}
-
-	return val.UserTags, val.UserTags != nil
+func FromUserTag(ctx context.Context) (interface{}, bool) {
+	value, ok := ctx.Value(userTagKey{}).(interface{})
+	return value, ok
 }

@@ -16,6 +16,7 @@ type Executor interface {
 }
 
 // ----------
+
 type GenExecutor interface {
 	GenExecutor(context.Context, interface{}) (Executor, error)
 }
@@ -39,6 +40,7 @@ func Get(name string) (GenExecutor, error) {
 }
 
 // -------------
+
 type factory struct {
 	genExecutors map[string]GenExecutor
 }
@@ -62,6 +64,7 @@ func (s *factory) Get(name string) (GenExecutor, error) {
 }
 
 // ------------
+
 type GroupSetter struct {
 	Name string
 }
@@ -80,6 +83,7 @@ func (s *GroupSetter) GenExecutor(ctx context.Context, value interface{}) (Execu
 }
 
 // ----------
+
 type BaseExecutor struct {
 	key        string
 	assignment assignment.Assignment
@@ -91,6 +95,7 @@ func (s *BaseExecutor) Execute(ctx context.Context, data interface{}) {
 }
 
 // -----------
+
 type GroupExecutor struct {
 	executors []Executor
 }

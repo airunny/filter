@@ -26,6 +26,7 @@ func (rf ReportFunc) Report(ctx context.Context, data interface{}, filterID stri
 }
 
 // -------------
+
 type Config struct {
 	Filters map[string]SingleConfig `json:"filters"`
 	Version string                  `json:"version"`

@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// Compare compare > compared return 1;compare > compared return 0;compare < compared return -1
 func Compare(compare, compared string) int {
 	if compare == compared {
 		return 0

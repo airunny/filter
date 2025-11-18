@@ -7,9 +7,8 @@ import (
 	"testing"
 
 	"github.com/liyanbing/filter/cache"
+	filterContext "github.com/liyanbing/filter/context"
 	"github.com/stretchr/testify/assert"
-
-	filterContext "github.com/liyanbing/filter/filter_context"
 )
 
 func TestCalculator_GetName(t *testing.T) {
@@ -80,24 +79,8 @@ var (
 		"time": []string{"1"},
 		"list": []string{"[1,2,3,4]"},
 	}
-
 	_UserTags = []string{"tag1", "tag2"}
 )
-
-func PrepayGeneralValues() filterContext.CommonValue {
-	return filterContext.CommonValue{
-		UserID:    _UserID,
-		Referer:   _Referer,
-		Channel:   _Channel,
-		UserAgent: _UserAgent,
-		IP:        _IP,
-		GetForm:   _Form,
-		Platform:  _Platform,
-		Device:    _Device,
-		Version:   _Version,
-		UserTags:  _UserTags,
-	}
-}
 
 func PrepayCustomData() map[string]interface{} {
 	return map[string]interface{}{
@@ -138,8 +121,15 @@ func TestVariables(t *testing.T) {
 	//defer location.Close()
 
 	ctx := context.Background()
-	ctx = filterContext.WithCommonValue(ctx, PrepayGeneralValues())
-	ctx = filterContext.WithCustom(ctx, PrepayCustomData())
+	ctx = filterContext.WithUserID(ctx, _UserID)
+	ctx = filterContext.WithDevice(ctx, _Device)
+	ctx = filterContext.WithIP(ctx, _IP)
+	ctx = filterContext.WithVersion(ctx, _Version)
+	ctx = filterContext.WithPlatform(ctx, _Platform)
+	ctx = filterContext.WithChannel(ctx, _Channel)
+	ctx = filterContext.WithUA(ctx, _UserAgent)
+	ctx = filterContext.WithReferer(ctx, _Referer)
+	ctx = filterContext.WithUserTag(ctx, _UserTags)
 
 	//now := time.Now()
 	//tsSimple, _ := strconv.ParseUint(now.Format("20060102150405"), 10, 64)
@@ -385,7 +375,6 @@ func TestVariables(t *testing.T) {
 			Variable: "calc.__age * __second",
 			Name:     "calc.__age * __second",
 			Assert: func(value interface{}) bool {
-				fmt.Println("之恩", value)
 				return value == float64(18*18)
 			},
 		},
@@ -421,18 +410,14 @@ func TestVariables(t *testing.T) {
 
 	cacheService := cache.NewCache()
 	for _, v := range cases {
-		variable := Factory.Get(v.Variable)
-		name := variable.GetName()
+		variable, ok := Get(v.Variable)
+		if !ok {
+			continue
+		}
+		name := variable.Name()
 		assert.Equal(t, v.Name, name, v.Name)
-		assert.Equal(t, true, v.Assert(variable.Value(ctx, customData, cacheService)), v.Name)
+		value, err := variable.Value(ctx, customData, cacheService)
+		assert.Nil(t, err)
+		assert.Equal(t, true, v.Assert(value), v.Name)
 	}
-}
-
-func TestCacheableVariable_Cacheable(t *testing.T) {
-	ret, err := Test(context.Background(), TestArgsFunc(Func1))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(ret)
 }
