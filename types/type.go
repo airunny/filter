@@ -1,18 +1,14 @@
-package _type
+package types
 
 import (
 	"reflect"
 	"strconv"
-	"strings"
-
-	"github.com/liyanbing/filter/utils"
-	"github.com/mohae/deepcopy"
 )
 
-type MyType int
+type FilterType int
 
 const (
-	STRING MyType = iota
+	STRING FilterType = iota
 	NUMBER
 	BOOL
 	HASH
@@ -22,7 +18,7 @@ const (
 	UNKNOWN
 )
 
-var MyTypeValue = map[MyType]string{
+var FilterTypeValue = map[FilterType]string{
 	STRING:  "STRING",
 	NUMBER:  "NUMBER",
 	BOOL:    "BOOL",
@@ -33,11 +29,11 @@ var MyTypeValue = map[MyType]string{
 	UNKNOWN: "UNKNOWN",
 }
 
-func (m MyType) String() string {
-	if myType, ok := MyTypeValue[m]; ok {
-		return myType
+func (m FilterType) String() string {
+	if filterType, ok := FilterTypeValue[m]; ok {
+		return filterType
 	}
-	return ""
+	return "UNKNOWN"
 }
 
 var numberTypes = map[reflect.Kind]bool{
@@ -55,7 +51,7 @@ var numberTypes = map[reflect.Kind]bool{
 	reflect.Float64: true,
 }
 
-func GetMyType(obj interface{}) MyType {
+func GetFilterType(obj interface{}) FilterType {
 	if obj == nil {
 		return NULL
 	}
@@ -118,11 +114,7 @@ func GetBool(obj interface{}) bool {
 	case uint64:
 		return v > 0
 	case string:
-		if v == "" {
-			return false
-		} else {
-			return true
-		}
+		return v != ""
 	default:
 		return false
 	}
@@ -321,109 +313,35 @@ func GetString(obj interface{}) string {
 }
 
 func IsHash(obj interface{}) bool {
-	return GetMyType(obj) == HASH
+	return GetFilterType(obj) == HASH
 }
 
 func IsArray(obj interface{}) bool {
-	return GetMyType(obj) == ARRAY
+	return GetFilterType(obj) == ARRAY
 }
 
 func IsString(obj interface{}) bool {
-	return GetMyType(obj) == STRING
+	return GetFilterType(obj) == STRING
 }
 
 func IsNumber(obj interface{}) bool {
-	return GetMyType(obj) == NUMBER
+	return GetFilterType(obj) == NUMBER
 }
 
 func IsBool(obj interface{}) bool {
-	return GetMyType(obj) == BOOL
+	return GetFilterType(obj) == BOOL
 }
 
 func IsStruct(obj interface{}) bool {
-	return GetMyType(obj) == STRUCT
+	return GetFilterType(obj) == STRUCT
 }
 
 func IsScalar(obj interface{}) bool {
-	myType := GetMyType(obj)
+	filterType := GetFilterType(obj)
 
-	if myType == NUMBER || myType == STRING || myType == BOOL || myType == NULL {
+	if filterType == NUMBER || filterType == STRING || filterType == BOOL || filterType == NULL {
 		return true
 	}
 
 	return false
-}
-
-func NumberCompare(a, b interface{}) int {
-	fa := GetFloat(a)
-	fb := GetFloat(b)
-
-	if utils.FloatEquals(fa, fb) {
-		return 0
-	}
-
-	if fa-fb > 0 {
-		return 1
-	} else {
-		return -1
-	}
-}
-
-func ObjectCompare(compare, compared interface{}) int {
-	if compare == nil && compared == nil {
-		return 0
-	}
-
-	compareType := GetMyType(compare)
-	comparedType := GetMyType(compared)
-
-	if compareType == NUMBER || compareType == BOOL || comparedType == NUMBER || comparedType == BOOL {
-		return NumberCompare(compare, compared)
-	}
-
-	if compareType == STRING || comparedType == STRING {
-		return strings.Compare(GetString(compare), GetString(compared))
-	}
-
-	if compareType == ARRAY && comparedType == ARRAY {
-		targetCompare, ok := compare.([]string)
-		if !ok {
-			return 1
-		}
-		compareCount := len(targetCompare)
-
-		targetCompared, ok := compared.([]string)
-		if !ok {
-			return 1
-		}
-		comparedCount := len(targetCompared)
-
-		if compareCount > comparedCount {
-			return 1
-		} else if compareCount < comparedCount {
-			return -1
-		}
-
-		for i := 0; i < compareCount; i++ {
-			if ret := strings.Compare(targetCompare[i], targetCompared[i]); ret != 0 {
-				return ret
-			}
-		}
-
-		return 0
-	}
-
-	return 1
-}
-
-func Clone(obj interface{}) interface{} {
-	if obj == nil {
-		return nil
-	}
-
-	if !IsScalar(obj) {
-		return deepcopy.Copy(obj)
-	}
-
-	return obj
 }

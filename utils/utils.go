@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	filterType "github.com/liyanbing/filter/filter_type"
+	"github.com/liyanbing/filter/types"
+	"github.com/mohae/deepcopy"
 )
 
 var EPSILON = 0.00000001
@@ -134,8 +135,8 @@ func GetObjectValueByKey(ctx context.Context, data interface{}, key string) (int
 
 func ParseTargetArrayValue(value interface{}) []interface{} {
 	var target []interface{}
-	switch filterType.GetFilterType(value) {
-	case filterType.STRING:
+	switch types.GetFilterType(value) {
+	case types.STRING:
 		err := json.Unmarshal([]byte(value.(string)), &target)
 		if err == nil {
 			return target
@@ -146,7 +147,7 @@ func ParseTargetArrayValue(value interface{}) []interface{} {
 		for _, v := range values {
 			target = append(target, strings.TrimSpace(v))
 		}
-	case filterType.ARRAY:
+	case types.ARRAY:
 		target = value.([]interface{})
 	default:
 		target = append(target, value)
@@ -155,8 +156,8 @@ func ParseTargetArrayValue(value interface{}) []interface{} {
 }
 
 func NumberCompare(a, b interface{}) int {
-	fa := filterType.GetFloat(a)
-	fb := filterType.GetFloat(b)
+	fa := types.GetFloat(a)
+	fb := types.GetFloat(b)
 
 	if FloatEquals(fa, fb) {
 		return 0
@@ -178,15 +179,15 @@ func ObjectCompare(compare, compared interface{}) int {
 		return 0
 	}
 
-	compareType := filterType.GetFilterType(compare)
-	comparedType := filterType.GetFilterType(compared)
+	compareType := types.GetFilterType(compare)
+	comparedType := types.GetFilterType(compared)
 
-	if compareType == filterType.NUMBER || compareType == filterType.BOOL || comparedType == filterType.NUMBER || comparedType == filterType.BOOL {
+	if compareType == types.NUMBER || compareType == types.BOOL || comparedType == types.NUMBER || comparedType == types.BOOL {
 		return NumberCompare(compare, compared)
 	}
 
-	if compareType == filterType.STRING || comparedType == filterType.STRING {
-		return strings.Compare(filterType.GetString(compare), filterType.GetString(compared))
+	if compareType == types.STRING || comparedType == types.STRING {
+		return strings.Compare(types.GetString(compare), types.GetString(compared))
 	}
 
 	ok := reflect.DeepEqual(compare, compared)
@@ -194,4 +195,15 @@ func ObjectCompare(compare, compared interface{}) int {
 		return 0
 	}
 	return 1
+}
+
+func Clone(obj interface{}) interface{} {
+	if obj == nil {
+		return nil
+	}
+
+	if !types.IsScalar(obj) {
+		return deepcopy.Copy(obj)
+	}
+	return obj
 }

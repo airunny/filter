@@ -515,3 +515,17 @@ func TestObjectCompare(t *testing.T) {
 		assert.Equal(t, v.expected, ObjectCompare(v.compare, v.compared), i)
 	}
 }
+
+type Student struct {
+	Name string
+	Age  int
+}
+
+func TestClone(t *testing.T) {
+	stu := Student{
+		Name: "zhangsan",
+		Age:  18,
+	}
+
+	assert.Equal(t, true, reflect.DeepEqual(stu, Clone(stu)))
+}

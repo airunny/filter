@@ -1,7 +1,6 @@
-package _type
+package types
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +9,7 @@ import (
 func TestGetMyType(t *testing.T) {
 	cases := []struct {
 		Data     interface{}
-		Expected MyType
+		Expected FilterType
 	}{
 		// string
 		{
@@ -122,20 +121,6 @@ func TestGetMyType(t *testing.T) {
 	}
 
 	for index, v := range cases {
-		assert.Equal(t, v.Expected, GetMyType(v.Data), index)
+		assert.Equal(t, v.Expected, GetFilterType(v.Data), index)
 	}
-}
-
-type Student struct {
-	Name string
-	Age  int
-}
-
-func TestClone(t *testing.T) {
-	stu := Student{
-		Name: "zhangsan",
-		Age:  18,
-	}
-
-	assert.Equal(t, true, reflect.DeepEqual(stu, Clone(stu)))
 }
