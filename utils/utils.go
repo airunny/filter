@@ -2,10 +2,13 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
 	"math/rand"
 	"reflect"
 	"strconv"
 	"strings"
+
+	filterType "github.com/liyanbing/filter/filter_type"
 )
 
 var EPSILON = 0.00000001
@@ -127,4 +130,68 @@ func GetObjectValueByKey(ctx context.Context, data interface{}, key string) (int
 		index++
 	}
 	return data, true
+}
+
+func ParseTargetArrayValue(value interface{}) []interface{} {
+	var target []interface{}
+	switch filterType.GetFilterType(value) {
+	case filterType.STRING:
+		err := json.Unmarshal([]byte(value.(string)), &target)
+		if err == nil {
+			return target
+		}
+
+		targetValue := value.(string)
+		values := strings.Split(targetValue, ",")
+		for _, v := range values {
+			target = append(target, strings.TrimSpace(v))
+		}
+	case filterType.ARRAY:
+		target = value.([]interface{})
+	default:
+		target = append(target, value)
+	}
+	return target
+}
+
+func NumberCompare(a, b interface{}) int {
+	fa := filterType.GetFloat(a)
+	fb := filterType.GetFloat(b)
+
+	if FloatEquals(fa, fb) {
+		return 0
+	}
+
+	if fa-fb > 0 {
+		return 1
+	} else {
+		return -1
+	}
+}
+
+// ObjectCompare compare
+// compare == compared return 0
+// compare > compared return 1
+// compare < compared return -1
+func ObjectCompare(compare, compared interface{}) int {
+	if compare == nil && compared == nil {
+		return 0
+	}
+
+	compareType := filterType.GetFilterType(compare)
+	comparedType := filterType.GetFilterType(compared)
+
+	if compareType == filterType.NUMBER || compareType == filterType.BOOL || comparedType == filterType.NUMBER || comparedType == filterType.BOOL {
+		return NumberCompare(compare, compared)
+	}
+
+	if compareType == filterType.STRING || comparedType == filterType.STRING {
+		return strings.Compare(filterType.GetString(compare), filterType.GetString(compared))
+	}
+
+	ok := reflect.DeepEqual(compare, compared)
+	if ok {
+		return 0
+	}
+	return 1
 }

@@ -3,9 +3,7 @@ package filter_type
 import (
 	"reflect"
 	"strconv"
-	"strings"
 
-	"github.com/liyanbing/filter/utils"
 	"github.com/mohae/deepcopy"
 )
 
@@ -80,9 +78,9 @@ func GetFilterType(obj interface{}) FilterType {
 		return BOOL
 	case reflect.Struct:
 		return STRUCT
+	default:
+		return UNKNOWN
 	}
-
-	return UNKNOWN
 }
 
 func GetBool(obj interface{}) bool {
@@ -348,44 +346,6 @@ func IsScalar(obj interface{}) bool {
 	}
 
 	return false
-}
-
-func NumberCompare(a, b interface{}) int {
-	fa := GetFloat(a)
-	fb := GetFloat(b)
-
-	if utils.FloatEquals(fa, fb) {
-		return 0
-	}
-
-	if fa-fb > 0 {
-		return 1
-	} else {
-		return -1
-	}
-}
-
-func ObjectCompare(compare, compared interface{}) int {
-	if compare == nil && compared == nil {
-		return 0
-	}
-
-	compareType := GetFilterType(compare)
-	comparedType := GetFilterType(compared)
-
-	if compareType == NUMBER || compareType == BOOL || comparedType == NUMBER || comparedType == BOOL {
-		return NumberCompare(compare, compared)
-	}
-
-	if compareType == STRING || comparedType == STRING {
-		return strings.Compare(GetString(compare), GetString(compared))
-	}
-
-	ok := reflect.DeepEqual(compare, compared)
-	if ok {
-		return 0
-	}
-	return 1
 }
 
 func Clone(obj interface{}) interface{} {

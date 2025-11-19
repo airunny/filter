@@ -2,114 +2,137 @@ package context
 
 import (
 	"context"
-	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWithCommonValue(t *testing.T) {
-	commonValue := CommonValue{
-		UserID:    "110",
-		Referer:   "http://www.baidu.com",
-		Channel:   "channel",
-		UserAgent: "Mozilla/5.0",
-		IP:        "127.0.0.1",
-		GetForm:   url.Values{"1": []string{"1"}, "2": []string{"2"}},
-		Platform:  "ios",
-		Device:    "device",
-		Version:   "0.0.1",
-		UserTags:  []string{"tag1"},
-	}
-
-	ctx := context.Background()
-	ctx = WithCommonValue(ctx, commonValue)
+	oldCtx := context.Background()
+	ctx := WithUserID(oldCtx, "user_id")
+	ctx = WithDevice(ctx, "device_id")
+	ctx = WithIP(ctx, "127.0.0.1")
+	ctx = WithVersion(ctx, "version")
+	ctx = WithPlatform(ctx, "ios")
+	ctx = WithChannel(ctx, "channel")
+	ctx = WithUA(ctx, "ua")
+	ctx = WithReferer(ctx, "referer")
+	ctx = WithUserTag(ctx, []string{"1", "2"})
 
 	cases := []struct {
 		Expected interface{}
 		Got      func(context.Context) (interface{}, bool)
+		Exists   bool
 	}{
 		{
-			Expected: commonValue.UserID,
+			Expected: "user_id",
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return UserID(ctx)
+				return FromUserId(ctx)
+			},
+			Exists: true,
+		},
+		{
+			Expected: nil,
+			Got: func(ctx context.Context) (interface{}, bool) {
+				return FromUserId(oldCtx)
 			},
 		},
 		{
-			Expected: commonValue.Referer,
+			Expected: "device_id",
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return Referer(ctx)
+				return FromDevice(ctx)
+			},
+			Exists: true,
+		},
+		{
+			Expected: nil,
+			Got: func(ctx context.Context) (interface{}, bool) {
+				return FromDevice(oldCtx)
 			},
 		},
 		{
-			Expected: commonValue.Channel,
+			Expected: "127.0.0.1",
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return Channel(ctx)
+				return FromIP(ctx)
+			},
+			Exists: true,
+		},
+		{
+			Expected: nil,
+			Got: func(ctx context.Context) (interface{}, bool) {
+				return FromIP(oldCtx)
 			},
 		},
 		{
-			Expected: commonValue.UserAgent,
+			Expected: "version",
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return UserAgent(ctx)
+				return FromVersion(ctx)
+			},
+			Exists: true,
+		},
+		{
+			Expected: nil,
+			Got: func(ctx context.Context) (interface{}, bool) {
+				return FromVersion(oldCtx)
 			},
 		},
 		{
-			Expected: commonValue.IP,
+			Expected: "ios",
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return IP(ctx)
+				return FromPlatform(ctx)
+			},
+			Exists: true,
+		},
+		{
+			Expected: nil,
+			Got: func(ctx context.Context) (interface{}, bool) {
+				return FromPlatform(oldCtx)
 			},
 		},
 		{
-			Expected: commonValue.GetForm,
+			Expected: "ua",
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return Form(ctx)
+				return FromUA(ctx)
+			},
+			Exists: true,
+		},
+		{
+			Expected: nil,
+			Got: func(ctx context.Context) (interface{}, bool) {
+				return FromUA(oldCtx)
 			},
 		},
 		{
-			Expected: commonValue.Platform,
+			Expected: "referer",
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return Platform(ctx)
+				return FromReferer(ctx)
+			},
+			Exists: true,
+		},
+		{
+			Expected: nil,
+			Got: func(ctx context.Context) (interface{}, bool) {
+				return FromReferer(oldCtx)
 			},
 		},
 		{
-			Expected: commonValue.Device,
+			Expected: []string{"1", "2"},
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return Device(ctx)
+				return FromUserTag(ctx)
 			},
+			Exists: true,
 		},
 		{
-			Expected: commonValue.Version,
+			Expected: nil,
 			Got: func(ctx context.Context) (interface{}, bool) {
-				return Version(ctx)
-			},
-		},
-		{
-			Expected: commonValue.UserTags,
-			Got: func(ctx context.Context) (interface{}, bool) {
-				return UserTags(ctx)
+				return FromUserTag(oldCtx)
 			},
 		},
 	}
 
 	for _, v := range cases {
 		ret, ok := v.Got(ctx)
-		assert.Equal(t, true, ok)
+		assert.Equal(t, v.Exists, ok)
 		assert.Equal(t, v.Expected, ret)
 	}
-}
-
-func TestWithCustom(t *testing.T) {
-	custom := map[string]interface{}{
-		"1": 1,
-		"2": 2,
-		"test": struct {
-		}{},
-		"4": true,
-	}
-	ctx := context.Background()
-	ctx = WithCustom(ctx, custom)
-
-	ret, ok := FromCustom(ctx)
-	assert.Equal(t, true, ok)
-	assert.Equal(t, custom, ret)
 }

@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/operations"
-	"github.com/liyanbing/filter/variables"
 
 	filterType "github.com/liyanbing/filter/filter_type"
 )
@@ -19,8 +17,8 @@ type Condition interface {
 }
 
 type BaseCondition struct {
-	variable  variables.Variable
-	operation operations.Operation
+	variable  variable.Variable
+	operation operation.Operation
 	value     interface{}
 }
 
@@ -142,7 +140,7 @@ func BuildCondition(ctx context.Context, items []interface{}, logic LOGIC) (Cond
 		return BuildCondition(ctx, items[2].([]interface{}), logic)
 	}
 
-	variable := variables.Factory.Get(key)
+	variable := variable.Factory.Get(key)
 	if variable == nil {
 		return nil, fmt.Errorf("condition unknow var [%s]", key)
 	}
@@ -152,7 +150,7 @@ func BuildCondition(ctx context.Context, items []interface{}, logic LOGIC) (Cond
 	}
 
 	operationName := items[1].(string)
-	operation := operations.Factory.Get(operationName)
+	operation := operation.Factory.Get(operationName)
 	if operation == nil {
 		return nil, fmt.Errorf("condition with invalid operation[%s]", operationName)
 	}

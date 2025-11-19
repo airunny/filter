@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/variables"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,7 +62,7 @@ var filterConf = `{
 }`
 
 func TestNewFilter(t *testing.T) {
-	variables.RegisterVariableFunc("order_num", func(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+	variable.RegisterVariableFunc("order_num", func(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
 		return 10
 	})
 	filterManager, err := NewFilter(context.Background(), filterConf, nil)

@@ -401,3 +401,117 @@ func TestGetObjectValueByKey(t *testing.T) {
 		assert.Equal(t, true, reflect.DeepEqual(v.Expected, ret))
 	}
 }
+
+func TestObjectCompare(t *testing.T) {
+	cases := []struct {
+		compare  interface{}
+		compared interface{}
+		expected int
+	}{
+		// int
+		{
+			compare:  1,
+			compared: 1,
+			expected: 0,
+		},
+		{
+			compare:  2,
+			compared: 1,
+			expected: 1,
+		},
+		{
+			compare:  1,
+			compared: 2,
+			expected: -1,
+		},
+		// float
+		{
+			compare:  1.0,
+			compared: 1.0,
+			expected: 0,
+		},
+		{
+			compare:  2.0,
+			compared: 1.0,
+			expected: 1,
+		},
+		{
+			compare:  1.0,
+			compared: 2.0,
+			expected: -1,
+		},
+		// float and int
+		{
+			compare:  1,
+			compared: 1.0,
+			expected: 0,
+		},
+		{
+			compare:  2,
+			compared: 1.0,
+			expected: 1,
+		},
+		{
+			compare:  1,
+			compared: 2.0,
+			expected: -1,
+		},
+		// string
+		{
+			compare:  "1",
+			compared: "1",
+			expected: 0,
+		},
+		{
+			compare:  "2",
+			compared: "1",
+			expected: 1,
+		},
+		{
+			compare:  "1",
+			compared: "2",
+			expected: -1,
+		},
+		// bool
+		{
+			compare:  true,
+			compared: true,
+			expected: 0,
+		},
+		{
+			compare:  1,
+			compared: false,
+			expected: 1,
+		},
+		{
+			compare:  false,
+			compared: 1.0,
+			expected: -1,
+		},
+		// arr
+		{
+			compare:  []string{"1", "2"},
+			compared: []string{"1", "2"},
+			expected: 0,
+		},
+		{
+			compare:  []string{"1", "2", "3"},
+			compared: []string{"1", "2"},
+			expected: 1,
+		},
+		{
+			compare:  []int{1, 2},
+			compared: []int{1, 2},
+			expected: 0,
+		},
+		{
+			compare:  []float64{1, 2},
+			compared: []float64{1, 2},
+			expected: 0,
+		},
+	}
+
+	for i, v := range cases {
+		assert.Equal(t, v.expected, ObjectCompare(v.compare, v.compared), i)
+	}
+}
