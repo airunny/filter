@@ -1,31 +1,29 @@
-package assignment
+package operations
 
 import (
 	"context"
 	"runtime/debug"
 	"testing"
 
+	"github.com/liyanbing/filter/cache"
+	"github.com/liyanbing/filter/variables"
 	"github.com/stretchr/testify/assert"
 )
 
-type mockAssignment struct {
+type mockOperation struct {
 	name string
-	err  error
 }
 
-func (m mockAssignment) Name() string {
+func (m mockOperation) Name() string {
 	return m.name
 }
 
-func (m mockAssignment) PrepareValue(ctx context.Context, value interface{}) (interface{}, error) {
+func (m mockOperation) PrepareValue(value interface{}) (interface{}, error) {
 	return value, nil
 }
 
-func (m mockAssignment) Run(ctx context.Context, data interface{}, key string, val interface{}) error {
-	if m.err != nil {
-		return m.err
-	}
-	return nil
+func (m mockOperation) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+	return true, nil
 }
 
 func TestRegister(t *testing.T) {
@@ -36,22 +34,22 @@ func TestRegister(t *testing.T) {
 	if !funcDidPanic {
 		t.Fatalf("func should panic\n\tPanic value:\t%#v", panicValue)
 	}
-	if panicValue != "cannot register a nil Assignment" {
-		t.Fatalf("panic error got %s want cannot register a nil Assignment", panicValue)
+	if panicValue != "cannot register a nil Operation" {
+		t.Fatalf("panic error got %s want cannot register a nil Operation", panicValue)
 	}
 
 	f = func() {
-		Register(mockAssignment{})
+		Register(mockOperation{})
 	}
 	funcDidPanic, panicValue, _ = didPanic(f)
 	if !funcDidPanic {
 		t.Fatalf("func should panic\n\tPanic value:\t%#v", panicValue)
 	}
-	if panicValue != "cannot register Assignment with empty string result for Name()" {
-		t.Fatalf("panic error got %s want cannot register Assignment with empty string result for Name()", panicValue)
+	if panicValue != "cannot register Operation with empty string result for Name()" {
+		t.Fatalf("panic error got %s want cannot register Operation with empty string result for Name()", panicValue)
 	}
 
-	op := mockAssignment{
+	op := mockOperation{
 		name: "gt",
 	}
 	Register(op)

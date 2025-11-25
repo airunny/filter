@@ -6,153 +6,80 @@ import (
 	"fmt"
 
 	"github.com/liyanbing/filter/cache"
-
-	filterType "github.com/liyanbing/filter/filter_type"
+	"github.com/liyanbing/filter/operations"
+	"github.com/liyanbing/filter/types"
+	"github.com/liyanbing/filter/variables"
 )
 
-// ------------- base
-
 type Condition interface {
-	IsConditionOk(context.Context, interface{}, *cache.Cache) bool
+	IsConditionOk(context.Context, interface{}, *cache.Cache) (bool, error)
+}
+
+type Logic int
+
+const (
+	LogicAnd Logic = iota
+	LogicOr
+	LogicNot
+)
+
+var groupLogicKeys = map[string]Logic{
+	"and": LogicAnd,
+	"or":  LogicOr,
+	"not": LogicNot,
 }
 
 type BaseCondition struct {
-	variable  variable.Variable
-	operation operation.Operation
+	variable  variables.Variable
+	operation operations.Operation
 	value     interface{}
 }
 
-func (s *BaseCondition) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) bool {
+func (s *BaseCondition) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) (bool, error) {
 	return s.operation.Run(ctx, s.variable, s.value, data, cache)
-}
-
-// -------------- group
-
-type LOGIC int
-
-const (
-	LOGIC_AND LOGIC = iota // 所有 Operation true
-	LOGIC_OR               // 只要有一个 Operation true
-	LOGIC_NOT              // 所有 Operation false
-)
-
-var groupConditionKeys = map[string]LOGIC{
-	"and": LOGIC_AND,
-	"or":  LOGIC_OR,
-	"not": LOGIC_NOT,
-}
-
-type GroupCondition struct {
-	logic      LOGIC
-	conditions []Condition
-}
-
-func NewGroupCondition(logic LOGIC) *GroupCondition {
-	return &GroupCondition{
-		logic:      logic,
-		conditions: make([]Condition, 0),
-	}
-}
-
-func (s *GroupCondition) add(condition Condition) {
-	s.conditions = append(s.conditions, condition)
-}
-
-func (s *GroupCondition) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) bool {
-	result := true
-
-	for _, condition := range s.conditions {
-		if ok := condition.IsConditionOk(ctx, data, cache); ok {
-			if s.logic == LOGIC_AND {
-				continue
-			}
-
-			if s.logic == LOGIC_OR {
-				result = true
-				break
-			}
-
-			if s.logic == LOGIC_NOT {
-				result = false
-				break
-			}
-		} else {
-			if s.logic == LOGIC_AND {
-				result = false
-				break
-			}
-
-			if s.logic == LOGIC_OR {
-				continue
-			}
-
-			if s.logic == LOGIC_NOT {
-				continue
-			}
-		}
-	}
-	return result
 }
 
 // --------------
 
-func BuildGroupCondition(ctx context.Context, items []interface{}, logic LOGIC) (Condition, error) {
-	group := NewGroupCondition(logic)
-
-	for _, item := range items {
-		if !filterType.IsArray(item) {
-			return nil, errors.New("condition item is not array")
-		}
-
-		subCondition, err := BuildCondition(ctx, item.([]interface{}), LOGIC_AND)
-		if err != nil {
-			return nil, err
-		}
-		group.add(subCondition)
-	}
-	return group, nil
-}
-
-func BuildCondition(ctx context.Context, items []interface{}, logic LOGIC) (Condition, error) {
+func BuildCondition(ctx context.Context, items []interface{}, logic Logic) (Condition, error) {
 	if len(items) == 0 {
 		return nil, errors.New("condition is empty")
 	}
 
 	// group
-	if filterType.IsArray(items[0]) {
-		return BuildGroupCondition(ctx, items, logic)
+	if types.IsArray(items[0]) {
+		return BuildGroup(ctx, items, logic)
 	}
 
 	if len(items) != 3 {
-		return nil, errors.New("condition item must contains 3 element")
+		return nil, errors.New("condition item must contains three element")
 	}
 
-	if !filterType.IsString(items[0]) {
+	if !types.IsString(items[0]) {
 		return nil, fmt.Errorf("condition item 1st element[%v] is not string", items[0])
 	}
 
 	key := items[0].(string)
-	if logic, ok := groupConditionKeys[key]; ok {
-		if !filterType.IsArray(items[2]) {
+	if logicKey, ok := groupLogicKeys[key]; ok {
+		if !types.IsArray(items[2]) {
 			return nil, fmt.Errorf("group condition [%s] 3rd element is not array", key)
 		}
-
-		return BuildCondition(ctx, items[2].([]interface{}), logic)
+		return BuildCondition(ctx, items[2].([]interface{}), logicKey)
 	}
 
-	variable := variable.Factory.Get(key)
-	if variable == nil {
-		return nil, fmt.Errorf("condition unknow var [%s]", key)
+	variable, ok := variables.Get(key)
+	if !ok {
+		return nil, fmt.Errorf("condition not exists variable [%s]", key)
 	}
 
-	if !filterType.IsString(items[1]) {
+	if !types.IsString(items[1]) {
 		return nil, fmt.Errorf("condition item 2nd element[%g] is not string", items[1])
 	}
 
 	operationName := items[1].(string)
-	operation := operation.Factory.Get(operationName)
-	if operation == nil {
-		return nil, fmt.Errorf("condition with invalid operation[%s]", operationName)
+	operation, ok := operations.Get(operationName)
+	if !ok {
+		return nil, fmt.Errorf("condition not exists operation [%s]", operationName)
 	}
 
 	prepayValue, err := operation.PrepareValue(items[2])

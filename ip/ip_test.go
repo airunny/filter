@@ -1,12 +1,19 @@
 package ip
 
 import (
+	"fmt"
 	"net"
 	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func Test001(t *testing.T) {
+	ip, ipNet, err := net.ParseCIDR("192.0.2.1/24")
+	assert.Nil(t, err)
+	fmt.Println(ip.String(), ipNet.String(), ipNet.IP.String(), ipNet.Mask.String())
+}
 
 func TestToInt(t *testing.T) {
 	ip := net.ParseIP("192.168.2.1")

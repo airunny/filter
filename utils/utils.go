@@ -18,7 +18,6 @@ func FloatEquals(a, b float64) bool {
 	if (a-b) < EPSILON && (b-a) < EPSILON {
 		return true
 	}
-
 	return false
 }
 
@@ -28,11 +27,9 @@ type IWeight interface {
 
 func TotalWeight(weight []IWeight) int64 {
 	total := int64(0)
-
 	for _, v := range weight {
 		total += v.GetWeight()
 	}
-
 	return total
 }
 
@@ -40,7 +37,6 @@ func PickByWeight(weight []IWeight, totalWeight int64) int {
 	if totalWeight == 0 {
 		totalWeight = TotalWeight(weight)
 	}
-
 	choose := rand.Int63n(totalWeight) + 1
 	line := int64(0)
 	for i, b := range weight {
@@ -88,12 +84,11 @@ func GetObjectValueByKey(ctx context.Context, data interface{}, key string) (int
 
 	for index := 0; index < len(segs); {
 		seg := segs[index]
-
 		if data == nil {
 			return nil, false
 		}
-		seg = strings.TrimSpace(seg)
 
+		seg = strings.TrimSpace(seg)
 		switch reflect.TypeOf(data).Kind() {
 		case reflect.Map:
 			if v, ok := data.(map[string]interface{}); ok {
@@ -103,7 +98,6 @@ func GetObjectValueByKey(ctx context.Context, data interface{}, key string) (int
 			} else {
 				return nil, false
 			}
-
 		case reflect.Array, reflect.Slice:
 			value := reflect.ValueOf(data)
 			if i, err := strconv.Atoi(seg); err != nil {
@@ -113,18 +107,32 @@ func GetObjectValueByKey(ctx context.Context, data interface{}, key string) (int
 			} else {
 				data = value.Index(i).Interface()
 			}
-
 		case reflect.Struct:
-			value := reflect.ValueOf(data)
+			var (
+				value     = reflect.ValueOf(data)
+				valueType = reflect.TypeOf(data)
+			)
+
 			f := value.FieldByName(seg)
 			if !f.IsValid() {
-				return nil, false
+				existsJson := false
+				for i := 0; i < valueType.NumField(); i++ {
+					tf := valueType.Field(i)
+					if tf.Tag.Get("json") == seg {
+						existsJson = true
+						f = value.Field(i)
+						break
+					}
+				}
+
+				if !existsJson {
+					return nil, false
+				}
 			}
 			data = f.Interface()
 		case reflect.Ptr:
 			data = reflect.ValueOf(data).Elem().Interface()
 			continue
-
 		default:
 			return nil, false
 		}
@@ -206,4 +214,27 @@ func Clone(obj interface{}) interface{} {
 		return deepcopy.Copy(obj)
 	}
 	return obj
+}
+
+func SetValue(data reflect.Value, value interface{}) {
+	switch data.Kind() {
+	case reflect.Bool:
+		data.SetBool(types.GetBool(value))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		data.SetInt(types.GetInt(value))
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		data.SetUint(types.GetUint(value))
+	case reflect.Float32, reflect.Float64:
+		data.SetFloat(types.GetFloat(value))
+	case reflect.String:
+		data.SetString(types.GetString(value))
+	case reflect.Map:
+		data.Set(reflect.ValueOf(Clone(value)))
+	case reflect.Array, reflect.Slice:
+		data.Set(reflect.ValueOf(Clone(value)))
+	case reflect.Ptr:
+		data.Set(reflect.ValueOf(Clone(value)))
+	default:
+		data.Set(reflect.ValueOf(Clone(value)))
+	}
 }

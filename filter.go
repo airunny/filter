@@ -22,7 +22,7 @@ func BuildFilter(ctx context.Context, filterData []interface{}) (*Filter, error)
 	}
 
 	filterCount := len(filterData)
-	filterCondition, err := condition.BuildCondition(ctx, filterData[:filterCount-1], condition.LOGIC_AND)
+	filterCondition, err := condition.BuildCondition(ctx, filterData[:filterCount-1], condition.LogicAnd)
 	if err != nil {
 		return nil, err
 	}
