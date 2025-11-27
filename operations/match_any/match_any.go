@@ -2,7 +2,6 @@ package match_any
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -54,7 +53,7 @@ func (s *MatchAny) PrepareValue(value interface{}) (interface{}, error) {
 
 		reg, err := regexp.Compile(targetValueStr)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("[%s] operation value invalid regexp [%s]", Name, err))
+			return nil, fmt.Errorf("[%s] operation value invalid regexp [%s]", Name, targetValueStr)
 		}
 		elements = append(elements, reg)
 	}
@@ -62,6 +61,11 @@ func (s *MatchAny) PrepareValue(value interface{}) (interface{}, error) {
 }
 
 func (s *MatchAny) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+	elements, ok := value.([]interface{})
+	if !ok {
+		return false, ErrInvalidOperationValue
+	}
+
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
@@ -70,11 +74,6 @@ func (s *MatchAny) Run(ctx context.Context, variable variables.Variable, value i
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
 		return false, ErrInvalidVariableValue
-	}
-
-	elements, ok := value.([]interface{})
-	if !ok {
-		return false, ErrInvalidOperationValue
 	}
 
 	for _, element := range elements {

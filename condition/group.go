@@ -8,11 +8,6 @@ import (
 	"github.com/liyanbing/filter/types"
 )
 
-type Group struct {
-	logic      Logic
-	conditions []Condition
-}
-
 func NewGroup(logic Logic) *Group {
 	return &Group{
 		logic:      logic,
@@ -20,11 +15,17 @@ func NewGroup(logic Logic) *Group {
 	}
 }
 
-func (s *Group) add(condition Condition) {
+type Group struct {
+	logic      Logic
+	conditions []Condition
+}
+
+func (s *Group) Add(condition Condition) {
 	s.conditions = append(s.conditions, condition)
 }
 
 func (s *Group) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) (bool, error) {
+	result := true
 	for _, condition := range s.conditions {
 		ok, err := condition.IsConditionOk(ctx, data, cache)
 		if err != nil {
@@ -32,26 +33,36 @@ func (s *Group) IsConditionOk(ctx context.Context, data interface{}, cache *cach
 		}
 
 		if ok {
-			switch s.logic {
-			case LogicNot:
-				return false, nil
-			case LogicOr:
-				return true, nil
-			default:
+			if s.logic == LogicAnd {
 				continue
 			}
+
+			if s.logic == LogicOr {
+				result = true
+				break
+			}
+
+			if s.logic == LogicNot {
+				result = false
+				break
+			}
 		} else {
-			switch s.logic {
-			case LogicNot:
+			if s.logic == LogicAnd {
+				result = false
+				break
+			}
+
+			if s.logic == LogicOr {
+				result = false
 				continue
-			case LogicOr:
+			}
+
+			if s.logic == LogicNot {
 				continue
-			default:
-				return false, nil
 			}
 		}
 	}
-	return true, nil
+	return result, nil
 }
 
 func BuildGroup(ctx context.Context, items []interface{}, logic Logic) (Condition, error) {
@@ -65,7 +76,7 @@ func BuildGroup(ctx context.Context, items []interface{}, logic Logic) (Conditio
 		if err != nil {
 			return nil, err
 		}
-		group.add(subCondition)
+		group.Add(subCondition)
 	}
 	return group, nil
 }

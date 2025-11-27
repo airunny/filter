@@ -47,56 +47,6 @@ func TestFloatEquals(t *testing.T) {
 	}
 }
 
-type WeightMock struct {
-	Weight int64
-}
-
-func (s WeightMock) GetWeight() int64 {
-	return s.Weight
-}
-
-func TestTotalWeight(t *testing.T) {
-	weightArr := make([]IWeight, 0, 10)
-	total := int64(0)
-	for i := 0; i < 10; i++ {
-		total += int64(i)
-		weightArr = append(weightArr, &WeightMock{
-			Weight: int64(i),
-		})
-	}
-
-	assert.Equal(t, total, TotalWeight(weightArr))
-}
-
-func TestPickByWeight(t *testing.T) {
-	weightArr := make([]IWeight, 0, 10)
-	total := int64(0)
-	for i := 1; i <= 10; i++ {
-		total += int64(i)
-		weightArr = append(weightArr, &WeightMock{
-			Weight: int64(i),
-		})
-	}
-
-	pickCache := make(map[int]int)
-	totalCount := 100000
-	for i := 0; i < totalCount; i++ {
-		pickIndex := PickByWeight(weightArr, total)
-		pickIndex++
-		if _, ok := pickCache[pickIndex]; ok {
-			pickCache[pickIndex]++
-		} else {
-			pickCache[pickIndex] = 1
-		}
-	}
-
-	for k, v := range pickCache {
-		expected := float64(k) / float64(total)
-		got := float64(v) / float64(totalCount)
-		assert.Equal(t, true, (expected-got) < 1 && (got-expected) < 1)
-	}
-}
-
 // -------------
 type Work struct {
 	Name string `json:"name"`
@@ -528,4 +478,67 @@ func TestClone(t *testing.T) {
 	}
 
 	assert.Equal(t, true, reflect.DeepEqual(stu, Clone(stu)))
+}
+
+func TestVersionCompare(t *testing.T) {
+	cases := []struct {
+		Compare  string
+		Compared string
+		Result   int
+	}{
+		{
+			Compare:  "",
+			Compared: "",
+			Result:   0,
+		},
+		{
+			Compare:  "1",
+			Compared: "",
+			Result:   1,
+		},
+		{
+			Compare:  "",
+			Compared: "1",
+			Result:   -1,
+		},
+		{
+			Compare:  "1.1.1",
+			Compared: "1.1.1",
+			Result:   0,
+		},
+		{
+			Compare:  "1.2.1",
+			Compared: "1.1.1",
+			Result:   1,
+		},
+		{
+			Compare:  "1.1.1",
+			Compared: "1.2.1",
+			Result:   -1,
+		},
+		{
+			Compare:  "1.2.1",
+			Compared: "1.1.2",
+			Result:   1,
+		},
+		{
+			Compare:  "1.1.1.1",
+			Compared: "1.2.1",
+			Result:   -1,
+		},
+		{
+			Compare:  "1.1.1.0",
+			Compared: "1.1.1",
+			Result:   0,
+		},
+		{
+			Compare:  "1.1.1",
+			Compared: "1.1.1.0",
+			Result:   0,
+		},
+	}
+
+	for index, v := range cases {
+		assert.Equal(t, v.Result, VersionCompare(v.Compare, v.Compared), index)
+	}
 }

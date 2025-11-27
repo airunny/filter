@@ -1,4 +1,4 @@
-package match_any
+package match_none
 
 import (
 	"context"
@@ -35,7 +35,7 @@ func (s mockVariable) Value(ctx context.Context, data interface{}, cache *cache.
 	return s.value, nil
 }
 
-func TestMatchAny(t *testing.T) {
+func TestMatchNone(t *testing.T) {
 	cc := cache.NewCache()
 	err := errors.New("value not found")
 	cases := []struct {
@@ -127,7 +127,7 @@ func TestMatchAny(t *testing.T) {
 			ParsedValue: func() interface{} {
 				return []interface{}{"lang"}
 			},
-			Result: true,
+			Result: false,
 		},
 		{
 			Variable: mockVariable{
@@ -138,7 +138,7 @@ func TestMatchAny(t *testing.T) {
 			ParsedValue: func() interface{} {
 				return []interface{}{"lang"}
 			},
-			Result: true,
+			Result: false,
 		},
 		{
 			Variable: mockVariable{
@@ -149,7 +149,7 @@ func TestMatchAny(t *testing.T) {
 			ParsedValue: func() interface{} {
 				return []interface{}{"lang", "go"}
 			},
-			Result: true,
+			Result: false,
 		},
 		{
 			Variable: mockVariable{
@@ -160,7 +160,7 @@ func TestMatchAny(t *testing.T) {
 			ParsedValue: func() interface{} {
 				return []interface{}{"lang", "go"}
 			},
-			Result: true,
+			Result: false,
 		},
 		{
 			Variable: mockVariable{
@@ -171,7 +171,7 @@ func TestMatchAny(t *testing.T) {
 			ParsedValue: func() interface{} {
 				return []interface{}{"lang", "go"}
 			},
-			Result: false,
+			Result: true,
 		},
 		{
 			Variable: mockVariable{
@@ -182,7 +182,7 @@ func TestMatchAny(t *testing.T) {
 			ParsedValue: func() interface{} {
 				return []interface{}{"lang", "go"}
 			},
-			Result: false,
+			Result: true,
 		},
 		{
 			Variable: mockVariable{
@@ -193,7 +193,7 @@ func TestMatchAny(t *testing.T) {
 			ParsedValue: func() interface{} {
 				return []interface{}{"lang", "go"}
 			},
-			Result: true,
+			Result: false,
 		},
 		// regex
 		{
@@ -206,7 +206,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{reg}
 			},
-			Result: true,
+			Result: false,
 		},
 		{
 			Variable: mockVariable{
@@ -218,7 +218,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{reg}
 			},
-			Result: true,
+			Result: false,
 		},
 		{
 			Variable: mockVariable{
@@ -230,7 +230,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{reg}
 			},
-			Result: false,
+			Result: true,
 		},
 		{
 			Variable: mockVariable{
@@ -242,7 +242,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{reg}
 			},
-			Result: false,
+			Result: true,
 		},
 		{
 			Variable: mockVariable{
@@ -254,7 +254,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{reg}
 			},
-			Result: false,
+			Result: true,
 		},
 		// string and regex
 		{
@@ -267,7 +267,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{"golang", reg}
 			},
-			Result: true,
+			Result: false,
 		},
 		{
 			Variable: mockVariable{
@@ -279,7 +279,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{"golang", reg}
 			},
-			Result: true,
+			Result: false,
 		},
 		{
 			Variable: mockVariable{
@@ -291,7 +291,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{"golang", reg}
 			},
-			Result: false,
+			Result: true,
 		},
 		{
 			Variable: mockVariable{
@@ -303,7 +303,7 @@ func TestMatchAny(t *testing.T) {
 				reg, _ := regexp.Compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 				return []interface{}{"golang", reg}
 			},
-			Result: true,
+			Result: false,
 		},
 	}
 

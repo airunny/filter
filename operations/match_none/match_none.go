@@ -2,7 +2,6 @@ package match_none
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -15,6 +14,13 @@ import (
 
 const Name = "!~*"
 
+var (
+	ErrInvalidOperationValue        = fmt.Errorf("[%s] operation value must be string", Name)
+	ErrInvalidOperationElementValue = fmt.Errorf("[%s] operation value item must be string", Name)
+	ErrEmptyOperationValue          = fmt.Errorf("[%s] operation value can not be empty", Name)
+	ErrInvalidVariableValue         = fmt.Errorf("[%s] variable value must be string", Name)
+)
+
 func init() {
 	operations.Register(&MatchNone{})
 }
@@ -25,14 +31,14 @@ func (s *MatchNone) Name() string { return Name }
 func (s *MatchNone) PrepareValue(value interface{}) (interface{}, error) {
 	values := utils.ParseTargetArrayValue(value)
 	if len(values) == 0 {
-		return nil, fmt.Errorf("[%s] operation value is invalid", value)
+		return nil, ErrInvalidOperationValue
 	}
 
 	elements := make([]interface{}, 0, len(values))
 	for _, v := range values {
 		targetValueStr, ok := v.(string)
 		if !ok {
-			return nil, fmt.Errorf("[%s] operation value must be string", Name)
+			return nil, ErrInvalidOperationElementValue
 		}
 
 		if !(strings.HasPrefix(targetValueStr, "/") && strings.HasSuffix(targetValueStr, "/")) {
@@ -42,12 +48,12 @@ func (s *MatchNone) PrepareValue(value interface{}) (interface{}, error) {
 
 		targetValueStr = strings.TrimSuffix(strings.TrimPrefix(targetValueStr, "/"), "/")
 		if targetValueStr == "" {
-			return nil, fmt.Errorf("[%s] operation value is not a valid regexp [%s]", Name, targetValueStr)
+			return nil, ErrEmptyOperationValue
 		}
 
 		reg, err := regexp.Compile(targetValueStr)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("[%s] operation value is not a valid regexp [%s]", Name, err))
+			return nil, fmt.Errorf("[%s] operation value invalid regexp [%s]", Name, targetValueStr)
 		}
 		elements = append(elements, reg)
 	}
@@ -55,19 +61,19 @@ func (s *MatchNone) PrepareValue(value interface{}) (interface{}, error) {
 }
 
 func (s *MatchNone) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+	elements, ok := value.([]interface{})
+	if !ok {
+		return false, ErrInvalidOperationValue
+	}
+
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 
 	targetVariableValue, ok := variableValue.(string)
 	if !ok {
-		return false, fmt.Errorf("[%s] variable value must be string", Name)
-	}
-
-	elements, ok := value.([]interface{})
-	if !ok {
-		return false, fmt.Errorf("[%s] operation value must be array", Name)
+		return false, ErrInvalidVariableValue
 	}
 
 	for _, element := range elements {

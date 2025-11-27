@@ -10,7 +10,7 @@ import (
 	"github.com/liyanbing/filter/utils"
 )
 
-const Name = "__del"
+const Name = "del"
 
 func init() {
 	assignment.Register(&Delete{})

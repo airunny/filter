@@ -3,22 +3,50 @@ package filter
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"sort"
 
 	"github.com/liyanbing/filter/cache"
 	"github.com/liyanbing/filter/condition"
 	"github.com/liyanbing/filter/executor"
-	"github.com/liyanbing/filter/utils"
 )
 
 type Filter struct {
+	id        string
+	weight    int64
+	priority  int64
 	condition condition.Condition
 	executor  executor.Executor
 }
 
-func BuildFilter(ctx context.Context, filterData []interface{}) (*Filter, error) {
+func (s *Filter) Weight() int64 {
+	return s.weight
+}
+
+func (s *Filter) Priority() int64 {
+	return s.priority
+}
+
+func (s *Filter) Run(ctx context.Context, data interface{}, cache *cache.Cache) (bool, error) {
+	ok, err := s.condition.IsConditionOk(ctx, data, cache)
+	if err != nil {
+		return false, err
+	}
+
+	if !ok {
+		return false, nil
+	}
+
+	err = s.executor.Execute(ctx, data)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func BuildFilter(ctx context.Context, id string, weight, priority int64, filterData []interface{}) (*Filter, error) {
 	if len(filterData) < 2 {
-		return nil, errors.New("filterData struct must contain at least 2 items")
+		return nil, errors.New("filter must contain at least two items")
 	}
 
 	filterCount := len(filterData)
@@ -33,113 +61,86 @@ func BuildFilter(ctx context.Context, filterData []interface{}) (*Filter, error)
 	}
 
 	return &Filter{
+		id:        id,
+		weight:    weight,
+		priority:  priority,
 		condition: filterCondition,
 		executor:  filterExecutor,
 	}, nil
 }
 
-func (s *Filter) Run(ctx context.Context, data interface{}, cache *cache.Cache) bool {
-	if !s.condition.IsConditionOk(ctx, data, cache) {
-		return false
-	}
-
-	s.executor.Execute(ctx, data)
-	return true
-}
-
-// --------------
-type filterPack struct {
-	Filter   *Filter
-	Id       string
-	Weight   int64
-	Priority int64
-}
-
-func (s *filterPack) GetWeight() int64 {
-	return s.Weight
-}
-
-func (s *filterPack) GetPriority() int64 {
-	return s.Priority
-}
-
-// ----------------
 type priorityBoundary struct {
-	NextPriorityStartIndex int
-	TotalWeights           int64
+	nextIndex int
+	weight    int64
 }
 
 type GroupFilter struct {
-	filters          []*filterPack
+	filters          []*Filter
 	priorityBoundary []priorityBoundary
-	batchMode        bool
-	totalWeights     int64
-}
-
-func NewEmptyFilterGroup(batchMode bool) *GroupFilter {
-	return &GroupFilter{
-		batchMode: batchMode,
-	}
+	batch            bool
+	weight           int64
 }
 
 func NewGroupFilterWithConfig(ctx context.Context, cnf *Config) (*GroupFilter, error) {
-	group := NewEmptyFilterGroup(false)
-	for filterID, filterCnf := range cnf.Filters {
-		singleFilter, err := BuildFilter(ctx, filterCnf.FilterData)
+	group := &GroupFilter{
+		filters: make([]*Filter, 0, len(cnf.Filters)),
+		batch:   cnf.Batch,
+	}
+
+	for id, filter := range cnf.Filters {
+		singleFilter, err := BuildFilter(ctx, id, filter.Weight, filter.Priority, filter.Filter)
 		if err != nil {
 			return nil, err
 		}
-		group.Add(singleFilter, filterID, filterCnf.Priority, filterCnf.Weight)
+		group.Add(singleFilter)
 	}
 	return group, nil
 }
 
-func (s *GroupFilter) Run(ctx context.Context, data interface{}, cache *cache.Cache) (successNumber int, filterID string) {
-	if s.totalWeights > 0 {
-		filters := make([]utils.IWeight, 0, len(s.filters))
-		for _, filter := range s.filters {
+func (s *GroupFilter) Run(ctx context.Context, data interface{}, cache *cache.Cache) (successNumber int, filterIds []string, err error) {
+	filters := s.filters
+	if s.weight > 0 {
+		lastBoundary := 0
+		filters = make([]*Filter, 0, len(s.filters))
+		for _, filter := range filters {
 			filters = append(filters, filter)
 		}
 
-		lastBoundary := 0
 		for _, boundary := range s.priorityBoundary {
-			if boundary.TotalWeights != 0 {
-				utils.ShuffleByWeight(filters[lastBoundary:boundary.NextPriorityStartIndex], boundary.TotalWeights)
+			if boundary.weight != 0 {
+				shuffleByWeight(filters[lastBoundary:boundary.nextIndex], boundary.weight)
 			}
-			lastBoundary = boundary.NextPriorityStartIndex
-		}
-
-		s.filters = s.filters[:0]
-		for _, filter := range filters {
-			s.filters = append(s.filters, filter.(*filterPack))
+			lastBoundary = boundary.nextIndex
 		}
 	}
 
-	for _, filter := range s.filters {
-		if filter.Filter.Run(ctx, data, cache) {
-			filterID = filter.Id
-			successNumber++
-			if !s.batchMode {
-				break
-			}
+	for _, filter := range filters {
+		var ok bool
+		ok, err = filter.Run(ctx, data, cache)
+		if err != nil {
+			return
+		}
+
+		if !ok {
+			continue
+		}
+
+		filterIds = append(filterIds, filter.id)
+		successNumber++
+		if !s.batch {
+			break
 		}
 	}
 	return
 }
 
-func (s *GroupFilter) Add(filter *Filter, filterId string, priority int64, weight int64) {
-	s.filters = append(s.filters, &filterPack{
-		Filter:   filter,
-		Id:       filterId,
-		Weight:   weight,
-		Priority: priority,
-	})
-	s.totalWeights += weight
+func (s *GroupFilter) Add(filter *Filter) {
+	s.filters = append(s.filters, filter)
+	s.weight += filter.weight
 
 	sort.Slice(s.filters, func(i, j int) bool {
-		return s.filters[i].GetPriority() > s.filters[j].GetPriority()
+		return s.filters[i].Priority() > s.filters[j].Priority()
 	})
-
 	s.locatePriorityBoundary()
 }
 
@@ -150,20 +151,63 @@ func (s *GroupFilter) locatePriorityBoundary() {
 
 	for index, filter := range s.filters {
 		if index != 0 {
-			if filter.Priority != lastPriority {
+			if filter.Priority() != lastPriority {
 				s.priorityBoundary = append(s.priorityBoundary, priorityBoundary{
-					NextPriorityStartIndex: index,
-					TotalWeights:           totalWeight,
+					nextIndex: index,
+					weight:    totalWeight,
 				})
 				totalWeight = 0
 			}
 		}
-		totalWeight += filter.GetWeight()
-		lastPriority = filter.Priority
+		totalWeight += filter.Weight()
+		lastPriority = filter.Priority()
 	}
 
 	s.priorityBoundary = append(s.priorityBoundary, priorityBoundary{
-		NextPriorityStartIndex: len(s.filters),
-		TotalWeights:           totalWeight,
+		nextIndex: len(s.filters),
+		weight:    totalWeight,
 	})
+}
+
+func filterWeight(filters []*Filter) int64 {
+	total := int64(0)
+	for _, filter := range filters {
+		total += filter.Weight()
+	}
+	return total
+}
+
+func pickByWeight(filters []*Filter, totalWeight int64) int {
+	if totalWeight == 0 {
+		totalWeight = filterWeight(filters)
+	}
+
+	var (
+		choose = rand.Int63n(totalWeight) + 1
+		line   = int64(0)
+	)
+
+	for i, filter := range filters {
+		line += filter.Weight()
+		if choose <= line {
+			return i
+		}
+	}
+	return 0
+}
+
+func shuffleByWeight(filters []*Filter, totalWeight int64) {
+	if len(filters) == 0 || len(filters) == 1 {
+		return
+	}
+
+	if totalWeight == 0 {
+		totalWeight = filterWeight(filters)
+	}
+
+	for curIndex := 0; curIndex < len(filters); curIndex++ {
+		chooseIndex := curIndex + pickByWeight(filters[curIndex:], totalWeight)
+		filters[chooseIndex], filters[curIndex] = filters[curIndex], filters[chooseIndex]
+		totalWeight -= filters[curIndex].Weight()
+	}
 }

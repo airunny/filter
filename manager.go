@@ -16,7 +16,7 @@ type Manger interface {
 }
 
 type Reporter interface {
-	Report(ctx context.Context, data interface{}, filterID string)
+	Report(ctx context.Context, data interface{}, filterIds []string)
 }
 
 type ReportFunc func(ctx context.Context, data interface{}, filterID string)
@@ -30,12 +30,13 @@ func (rf ReportFunc) Report(ctx context.Context, data interface{}, filterID stri
 type Config struct {
 	Filters map[string]SingleConfig `json:"filters"`
 	Version string                  `json:"version"`
+	Batch   bool                    `json:"batch"`
 }
 
 type SingleConfig struct {
-	FilterData []interface{} `json:"filter_data"`
-	Weight     int64         `json:"weight"`
-	Priority   int64         `json:"priority"`
+	Filter   []interface{} `json:"filter"`
+	Weight   int64         `json:"weight"`
+	Priority int64         `json:"priority"`
 }
 
 type container struct {
@@ -90,7 +91,10 @@ func (s *manager) Execute(ctx context.Context, data interface{}) (interface{}, e
 		data = make(map[string]interface{})
 	}
 
-	_, filterID := filterValue.filterGroup.Run(ctx, data, cache.NewCache())
+	_, filterID, err := filterValue.filterGroup.Run(ctx, data, cache.NewCache())
+	if err != nil {
+		return nil, err
+	}
 	if filterValue.reporter != nil {
 		filterValue.reporter.Report(ctx, data, filterID)
 	}

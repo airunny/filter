@@ -11,7 +11,7 @@ import (
 	"github.com/liyanbing/filter/utils"
 )
 
-const Name = "__set"
+const Name = "="
 
 func init() {
 	assignment.Register(&Set{})

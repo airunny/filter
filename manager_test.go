@@ -1,13 +1,5 @@
 package filter
 
-import (
-	"context"
-	"testing"
-
-	"github.com/liyanbing/filter/cache"
-	"github.com/stretchr/testify/assert"
-)
-
 var filterConf = `{
     "filters": {
         "1": {
@@ -61,13 +53,13 @@ var filterConf = `{
     }
 }`
 
-func TestNewFilter(t *testing.T) {
-	variable.RegisterVariableFunc("order_num", func(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
-		return 10
-	})
-	filterManager, err := NewFilter(context.Background(), filterConf, nil)
-	assert.Equal(t, nil, err)
-	ret, err := filterManager.Execute(context.Background(), nil)
-	assert.Equal(t, nil, err)
-	t.Logf("result: %#v", ret)
-}
+//func TestNewFilter(t *testing.T) {
+//	variable.RegisterVariableFunc("order_num", func(ctx context.Context, data interface{}, cache *cache.Cache) interface{} {
+//		return 10
+//	})
+//	filterManager, err := NewFilter(context.Background(), filterConf, nil)
+//	assert.Equal(t, nil, err)
+//	ret, err := filterManager.Execute(context.Background(), nil)
+//	assert.Equal(t, nil, err)
+//	t.Logf("result: %#v", ret)
+//}

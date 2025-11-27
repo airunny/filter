@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
+	"reflect"
 	"strings"
 	"sync"
 
 	"github.com/liyanbing/filter/cache"
 )
-
-var getReg = regexp.MustCompile(`^get.(.+)`)
 
 type Variable interface {
 	Name() string
@@ -64,13 +62,19 @@ func (s *factory) Get(name string) (Variable, bool) {
 }
 
 func (s *factory) Register(builder Builder) {
+	if builder == nil {
+		panic("cannot register a nil variable builder")
+	}
+	if builder.Name() == "" {
+		panic("cannot register variable builder with empty string result for Name()")
+	}
+
 	s.Lock()
 	defer s.Unlock()
-	name := builder.Name()
-	if _, ok := s.builder[name]; ok {
-		panic(fmt.Sprintf("%v variable already exists", name))
+	if _, ok := s.builder[builder.Name()]; ok {
+		panic(fmt.Sprintf("%v variable builder already exists", builder.Name()))
 	}
-	s.builder[name] = builder
+	s.builder[builder.Name()] = builder
 }
 
 func Register(builder Builder) {
@@ -79,6 +83,14 @@ func Register(builder Builder) {
 
 func Get(name string) (Variable, bool) {
 	return defaultFactory.Get(name)
+}
+
+func Print() {
+	fmt.Printf("Variables: \n")
+	for name, builder := range defaultFactory.builder {
+		fmt.Println(name, reflect.TypeOf(builder).Name())
+	}
+	fmt.Printf("\n\n")
 }
 
 // ============================== Builder ==========================

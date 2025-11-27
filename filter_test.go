@@ -1,11 +1,17 @@
 package filter
 
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
 var (
 	conf1 = `
 {
     "m": {
         "1": {
-            "filter_data": [
+            "filter": [
                 [
                     "order_num",
                     ">",
@@ -116,3 +122,50 @@ var (
     }
 }`
 )
+
+func TestTotalWeight(t *testing.T) {
+	var (
+		filters = make([]*Filter, 0, 10)
+		total   = int64(0)
+	)
+
+	for i := 0; i < 10; i++ {
+		total += int64(i)
+		filters = append(filters, &Filter{
+			weight: int64(i),
+		})
+	}
+	assert.Equal(t, total, filterWeight(filters))
+}
+
+func TestPickByWeight(t *testing.T) {
+	var (
+		filters = make([]*Filter, 0, 10)
+		total   = int64(0)
+	)
+
+	for i := 1; i <= 10; i++ {
+		total += int64(i)
+		filters = append(filters, &Filter{
+			weight: int64(i),
+		})
+	}
+
+	pickCache := make(map[int]int)
+	totalCount := 100000
+	for i := 0; i < totalCount; i++ {
+		pickIndex := pickByWeight(filters, total)
+		pickIndex++
+		if _, ok := pickCache[pickIndex]; ok {
+			pickCache[pickIndex]++
+		} else {
+			pickCache[pickIndex] = 1
+		}
+	}
+
+	for k, v := range pickCache {
+		expected := float64(k) / float64(total)
+		got := float64(v) / float64(totalCount)
+		assert.Equal(t, true, (expected-got) < 1 && (got-expected) < 1)
+	}
+}

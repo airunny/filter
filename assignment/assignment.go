@@ -3,6 +3,7 @@ package assignment
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 )
 
@@ -40,6 +41,7 @@ func (s *factory) Register(assignment Assignment) {
 	if assignment == nil {
 		panic("cannot register a nil Assignment")
 	}
+
 	if assignment.Name() == "" {
 		panic("cannot register Assignment with empty string result for Name()")
 	}
@@ -63,4 +65,12 @@ func Register(operation Assignment) {
 
 func Get(name string) (Assignment, bool) {
 	return defaultFactory.Get(name)
+}
+
+func Print() {
+	fmt.Printf("Assignments: \n")
+	for name, assignment := range defaultFactory.assignments {
+		fmt.Println(name, reflect.TypeOf(assignment).Name())
+	}
+	fmt.Printf("\n\n")
 }

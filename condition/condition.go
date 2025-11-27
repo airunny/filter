@@ -39,8 +39,6 @@ func (s *BaseCondition) IsConditionOk(ctx context.Context, data interface{}, cac
 	return s.operation.Run(ctx, s.variable, s.value, data, cache)
 }
 
-// --------------
-
 func BuildCondition(ctx context.Context, items []interface{}, logic Logic) (Condition, error) {
 	if len(items) == 0 {
 		return nil, errors.New("condition is empty")
@@ -73,7 +71,7 @@ func BuildCondition(ctx context.Context, items []interface{}, logic Logic) (Cond
 	}
 
 	if !types.IsString(items[1]) {
-		return nil, fmt.Errorf("condition item 2nd element[%g] is not string", items[1])
+		return nil, fmt.Errorf("condition operation should be string [%v]", items[1])
 	}
 
 	operationName := items[1].(string)

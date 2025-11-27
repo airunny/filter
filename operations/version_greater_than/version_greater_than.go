@@ -6,8 +6,8 @@ import (
 	"github.com/liyanbing/filter/cache"
 	"github.com/liyanbing/filter/operations"
 	"github.com/liyanbing/filter/types"
+	"github.com/liyanbing/filter/utils"
 	"github.com/liyanbing/filter/variables"
-	"github.com/liyanbing/filter/version"
 )
 
 const Name = "vgt"
@@ -27,7 +27,7 @@ func (s *VersionGreaterThan) Run(ctx context.Context, variable variables.Variabl
 		return false, err
 	}
 
-	if version.Compare(types.GetString(variableValue), types.GetString(value)) == 1 {
+	if utils.VersionCompare(types.GetString(variableValue), types.GetString(value)) == 1 {
 		return true, nil
 	}
 	return false, nil

@@ -3,6 +3,7 @@ package operations
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 
 	"github.com/liyanbing/filter/cache"
@@ -57,4 +58,12 @@ func Register(operation Operation) {
 
 func Get(name string) (Operation, bool) {
 	return defaultFactory.Get(name)
+}
+
+func Print() {
+	for name, operation := range defaultFactory.operations {
+		fmt.Printf("Operations: \n")
+		fmt.Println(name, reflect.TypeOf(operation).Name())
+		fmt.Printf("\n\n")
+	}
 }

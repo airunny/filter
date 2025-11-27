@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 	"encoding/json"
-	"math/rand"
 	"reflect"
 	"strconv"
 	"strings"
@@ -19,49 +18,6 @@ func FloatEquals(a, b float64) bool {
 		return true
 	}
 	return false
-}
-
-type IWeight interface {
-	GetWeight() int64
-}
-
-func TotalWeight(weight []IWeight) int64 {
-	total := int64(0)
-	for _, v := range weight {
-		total += v.GetWeight()
-	}
-	return total
-}
-
-func PickByWeight(weight []IWeight, totalWeight int64) int {
-	if totalWeight == 0 {
-		totalWeight = TotalWeight(weight)
-	}
-	choose := rand.Int63n(totalWeight) + 1
-	line := int64(0)
-	for i, b := range weight {
-		line += b.GetWeight()
-		if choose <= line {
-			return i
-		}
-	}
-	return 0
-}
-
-func ShuffleByWeight(weight []IWeight, totalWeight int64) {
-	if len(weight) == 0 || len(weight) == 1 {
-		return
-	}
-
-	if totalWeight == 0 {
-		totalWeight = TotalWeight(weight)
-	}
-
-	for curIndex := 0; curIndex < len(weight); curIndex++ {
-		chooseIndex := curIndex + PickByWeight(weight[curIndex:], totalWeight)
-		weight[chooseIndex], weight[curIndex] = weight[curIndex], weight[chooseIndex]
-		totalWeight -= weight[curIndex].GetWeight()
-	}
 }
 
 func GetObjectValueByKey(ctx context.Context, data interface{}, key string) (interface{}, bool) {
@@ -237,4 +193,76 @@ func SetValue(data reflect.Value, value interface{}) {
 	default:
 		data.Set(reflect.ValueOf(Clone(value)))
 	}
+}
+
+// VersionCompare
+// compare > compared return 1
+// compare > compared return 0
+// compare < compared return -1
+func VersionCompare(compare, compared string) int {
+	compare = strings.TrimPrefix(strings.ToLower(compare), "v")
+	compared = strings.TrimPrefix(strings.ToLower(compared), "v")
+
+	if compare == compared {
+		return 0
+	}
+
+	if compare == "" {
+		return -1
+	}
+
+	if compared == "" {
+		return 1
+	}
+
+	compareVersions := strings.Split(compare, ".")
+	compareVersionCount := len(compareVersions)
+
+	comparedVersions := strings.Split(compared, ".")
+	comparedVersionCount := len(comparedVersions)
+
+	maxVersionCount := compareVersionCount
+	if comparedVersionCount > compareVersionCount {
+		maxVersionCount = comparedVersionCount
+	}
+
+	for i := 0; i < maxVersionCount; i++ {
+		var (
+			compareVersion  string
+			comparedVersion string
+		)
+
+		if i >= compareVersionCount {
+			compareVersion = "0"
+		} else {
+			compareVersion = compareVersions[i]
+		}
+
+		if i >= comparedVersionCount {
+			comparedVersion = "0"
+		} else {
+			comparedVersion = comparedVersions[i]
+		}
+
+		if compareVersion == comparedVersion {
+			continue
+		}
+
+		compareVersionInt, err := strconv.ParseInt(compareVersion, 10, 64)
+		if err != nil {
+			return -1
+		}
+
+		comparedVersionInt, err := strconv.ParseInt(comparedVersion, 10, 64)
+		if err != nil {
+			return 1
+		}
+
+		if compareVersionInt < comparedVersionInt {
+			return -1
+		} else if compareVersionInt > comparedVersionInt {
+			return 1
+		}
+	}
+	return 0
 }
