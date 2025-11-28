@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	successName  = "success"
-	successValue = 1
+	Name  = "success"
+	Value = 1
 )
 
 func init() {
@@ -19,8 +19,8 @@ func init() {
 // Success 永远返回1
 type Success struct{}
 
-func (s *Success) Name() string    { return successName }
+func (s *Success) Name() string    { return Name }
 func (s *Success) Cacheable() bool { return true }
 func (s *Success) Value(_ context.Context, _ interface{}, _ *cache.Cache) (interface{}, error) {
-	return successValue, nil
+	return Value, nil
 }

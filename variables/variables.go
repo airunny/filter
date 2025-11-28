@@ -22,16 +22,16 @@ type Builder interface {
 	Build(string) Variable
 }
 
-type CalcFactorGetter interface {
+type Calculator interface {
 	CalcValue(ctx context.Context, key string) (float64, error)
 }
 
-type FrequencyGetter interface {
-	FrequencyValue(ctx context.Context, key string) interface{}
+type Frequency interface {
+	FrequencyValue(ctx context.Context, key string) (interface{}, error)
 }
 
 type Valuer interface {
-	Value(ctx context.Context, key string) interface{}
+	Value(ctx context.Context, key string) (interface{}, error)
 }
 
 // ============================== factory ==========================

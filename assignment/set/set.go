@@ -39,7 +39,7 @@ func (s *Set) Run(ctx context.Context, data interface{}, key string, val interfa
 			preDataPath = strings.Join(keys[:len(keys)-1], ".")
 		)
 
-		data, ok = utils.GetObjectValueByKey(ctx, data, preDataPath)
+		data, ok = utils.GetObjectValueByKey(data, preDataPath)
 		if !ok {
 			return fmt.Errorf("[%s] assignment %v not exists key %s", Name, reflect.TypeOf(originData).String(), preDataPath)
 		}

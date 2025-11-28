@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/ip"
 	"github.com/liyanbing/filter/operations"
+	"github.com/liyanbing/filter/utils"
 	"github.com/liyanbing/filter/variables"
 	"github.com/stretchr/testify/assert"
 )
@@ -98,7 +98,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24")
+				vv, _ := utils.IPRanges("192.0.2.0/24")
 				return vv
 			},
 			ResultErr: err,
@@ -110,7 +110,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24")
+				vv, _ := utils.IPRanges("192.0.2.0/24")
 				return vv
 			},
 			Result: true,
@@ -122,7 +122,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24")
+				vv, _ := utils.IPRanges("192.0.2.0/24")
 				return vv
 			},
 			Result: true,
@@ -134,7 +134,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24")
+				vv, _ := utils.IPRanges("192.0.2.0/24")
 				return vv
 			},
 			Result: true,
@@ -146,7 +146,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24")
+				vv, _ := utils.IPRanges("192.0.2.0/24")
 				return vv
 			},
 			Result: false,
@@ -158,7 +158,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24","192.168.12.27/30"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24", "192.168.12.27/30")
+				vv, _ := utils.IPRanges("192.0.2.0/24", "192.168.12.27/30")
 				return vv
 			},
 			Result: true,
@@ -170,7 +170,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24","192.168.12.27/30"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24", "192.168.12.27/30")
+				vv, _ := utils.IPRanges("192.0.2.0/24", "192.168.12.27/30")
 				return vv
 			},
 			Result: true,
@@ -182,7 +182,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24","192.168.12.27/30"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24", "192.168.12.27/30")
+				vv, _ := utils.IPRanges("192.0.2.0/24", "192.168.12.27/30")
 				return vv
 			},
 			Result: true,
@@ -194,7 +194,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24","192.168.12.27/30"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24", "192.168.12.27/30")
+				vv, _ := utils.IPRanges("192.0.2.0/24", "192.168.12.27/30")
 				return vv
 			},
 			Result: true,
@@ -206,7 +206,7 @@ func TestInIpRange(t *testing.T) {
 			},
 			Value: `["192.0.2.0/24","192.168.12.27/30"]`,
 			ParsedValue: func() interface{} {
-				vv, _ := ip.Ranges("192.0.2.0/24", "192.168.12.27/30")
+				vv, _ := utils.IPRanges("192.0.2.0/24", "192.168.12.27/30")
 				return vv
 			},
 			Result: false,

@@ -7,7 +7,6 @@ import (
 	"github.com/liyanbing/calc/compute"
 	calcVariables "github.com/liyanbing/calc/variables"
 	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/types"
 	"github.com/liyanbing/filter/variables"
 )
 
@@ -44,22 +43,22 @@ func (s *Calculator) Cacheable() bool { return false }
 func (s *Calculator) Name() string    { return s.name }
 func (s *Calculator) Value(ctx context.Context, data interface{}, cache *cache.Cache) (interface{}, error) {
 	return compute.Evaluate(s.expr, calcVariables.ValueSourceFunc(func(key string) float64 {
-		if getter, ok := data.(variables.CalcFactorGetter); ok {
+		if getter, ok := data.(variables.Calculator); ok {
 			v, err := getter.CalcValue(ctx, key)
 			if err == nil {
 				return v
 			}
 		}
-
-		vv, ok := variables.Get(key)
-		if !ok {
-			return 0
-		}
-
-		value, err := vv.Value(ctx, data, cache)
-		if err != nil {
-			return 0
-		}
-		return types.GetFloat(value)
+		return 0
+		//vv, ok := variables.Get(key)
+		//if !ok {
+		//	return 0
+		//}
+		//
+		//value, err := vv.Value(ctx, data, cache)
+		//if err != nil {
+		//	return 0
+		//}
+		//return types.GetFloat(value)
 	}))
 }

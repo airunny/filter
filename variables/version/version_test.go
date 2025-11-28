@@ -2,51 +2,59 @@ package version
 
 import (
 	"context"
+	"errors"
+	"reflect"
 	"testing"
 
+	"github.com/liyanbing/filter/cache"
 	filterContext "github.com/liyanbing/filter/context"
+	_ "github.com/liyanbing/filter/location"
 	"github.com/liyanbing/filter/variables"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVersion(t *testing.T) {
-	oldCtx := context.Background()
-	ctx := filterContext.WithVersion(oldCtx, "version")
-	ctx2 := filterContext.WithVersion(ctx, "v1.0.0")
+func TestDevice(t *testing.T) {
+	ctx := context.Background()
+	cc := cache.NewCache()
 	cases := []struct {
-		Name  string
-		Ctx   context.Context
-		Value interface{}
-		Error bool
+		ctx  context.Context
+		want string
+		err  error
 	}{
+		// err
 		{
-			Name:  Name,
-			Ctx:   ctx,
-			Value: "version",
+			ctx: ctx,
+			err: errors.New("version not found in context"),
+		},
+		// success
+		{
+			ctx:  filterContext.WithVersion(ctx, "v1.0.0"),
+			want: "v1.0.0",
 		},
 		{
-			Name:  Name,
-			Ctx:   ctx2,
-			Value: "v1.0.0",
+			ctx:  filterContext.WithVersion(ctx, "v2.0.0"),
+			want: "v2.0.0",
 		},
 		{
-			Name:  Name,
-			Ctx:   oldCtx,
-			Value: "version",
-			Error: true,
+			ctx:  filterContext.WithVersion(ctx, "v3.0.0"),
+			want: "v3.0.0",
+		},
+		{
+			ctx:  filterContext.WithVersion(ctx, ""),
+			want: "",
 		},
 	}
 
-	vv, exists := variables.Get(Name)
-	assert.True(t, exists)
-	assert.NotNil(t, vv)
-	for _, tt := range cases {
-		assert.Equal(t, vv.Name(), tt.Name)
-		value, err := vv.Value(tt.Ctx, nil, nil)
-		if tt.Error {
-			assert.NotNil(t, err)
+	variable, ok := variables.Get(Name)
+	assert.True(t, ok)
+	assert.NotNil(t, variable)
+	assert.Equal(t, Name, variable.Name())
+	for index, tt := range cases {
+		ret, err := variable.Value(tt.ctx, nil, cc)
+		if err != nil {
+			assert.True(t, reflect.DeepEqual(tt.err, err), index)
 		} else {
-			assert.Equal(t, tt.Value, value)
+			assert.Equal(t, tt.want, ret, index)
 		}
 	}
 }

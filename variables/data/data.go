@@ -42,7 +42,11 @@ type Data struct {
 func (s *Data) Name() string    { return s.name }
 func (s *Data) Cacheable() bool { return false }
 func (s *Data) Value(ctx context.Context, data interface{}, _ *cache.Cache) (interface{}, error) {
-	value, ok := utils.GetObjectValueByKey(ctx, data, s.key)
+	if valuer, ok := data.(variables.Valuer); ok {
+		return valuer.Value(ctx, s.key)
+	}
+
+	value, ok := utils.GetObjectValueByKey(data, s.key)
 	if !ok {
 		return nil, fmt.Errorf("%s not found in data", s.name)
 	}

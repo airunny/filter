@@ -40,9 +40,8 @@ type Freq struct {
 func (s *Freq) Name() string    { return s.name }
 func (s *Freq) Cacheable() bool { return false }
 func (s *Freq) Value(ctx context.Context, data interface{}, _ *cache.Cache) (interface{}, error) {
-	if getter, ok := data.(variables.FrequencyGetter); ok {
-		freData := getter.FrequencyValue(ctx, s.key)
-		return freData, nil
+	if getter, ok := data.(variables.Frequency); ok {
+		return getter.FrequencyValue(ctx, s.key)
 	}
 	return 0, nil
 }

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/ip"
 	"github.com/liyanbing/filter/operations"
 	"github.com/liyanbing/filter/utils"
 	"github.com/liyanbing/filter/variables"
@@ -48,7 +47,7 @@ func (s *InIPRange) PrepareValue(value interface{}) (interface{}, error) {
 		}
 		ipRanges = append(ipRanges, ipr)
 	}
-	return ip.Ranges(ipRanges...)
+	return utils.IPRanges(ipRanges...)
 }
 
 func (s *InIPRange) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
@@ -62,9 +61,9 @@ func (s *InIPRange) Run(ctx context.Context, variable variables.Variable, value 
 		return false, ErrInvalidVariableValue
 	}
 
-	targetValue, ok := value.([]ip.Range)
+	targetValue, ok := value.([]utils.IPRange)
 	if !ok {
 		return false, ErrInvalidOperationValue
 	}
-	return ip.InRange(targetValue, net.ParseIP(targetVariableValue)), nil
+	return utils.InIPRange(targetValue, net.ParseIP(targetVariableValue)), nil
 }

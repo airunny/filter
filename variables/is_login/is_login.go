@@ -2,6 +2,9 @@ package variables
 
 import (
 	"context"
+	"strings"
+
+	"github.com/liyanbing/filter/types"
 
 	"github.com/liyanbing/filter/cache"
 	filterContext "github.com/liyanbing/filter/context"
@@ -25,7 +28,7 @@ func (s *IsLogin) Value(ctx context.Context, _ interface{}, _ *cache.Cache) (int
 		return false, nil
 	}
 
-	if uid != "" {
+	if strings.TrimSpace(types.GetString(uid)) != "" {
 		return true, nil
 	} else {
 		return false, nil

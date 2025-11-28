@@ -96,7 +96,7 @@ func (s *Time) Value(_ context.Context, _ interface{}, _ *cache.Cache) (interfac
 	case DateName:
 		value = now.Format("2006-01-02")
 	default:
-		value = now.Format("2006-01-02 15:04:05") // time
+		value = now.Format("2006-01-02 15:04:05")
 	}
 	return value, nil
 }
