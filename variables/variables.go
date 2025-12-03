@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/liyanbing/filter/cache"
+	"github.com/airunny/filter/cache"
 )
 
 type Variable interface {

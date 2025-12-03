@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/liyanbing/filter/assignment"
-	"github.com/liyanbing/filter/utils"
+	"github.com/airunny/filter/assignment"
+	"github.com/airunny/filter/utils"
 )
 
 const Name = "del"

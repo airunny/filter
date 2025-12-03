@@ -3,11 +3,11 @@ package version_greater_than
 import (
 	"context"
 
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/operations"
-	"github.com/liyanbing/filter/types"
-	"github.com/liyanbing/filter/utils"
-	"github.com/liyanbing/filter/variables"
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/operations"
+	"github.com/airunny/filter/types"
+	"github.com/airunny/filter/utils"
+	"github.com/airunny/filter/variables"
 )
 
 const Name = "vgt"

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/liyanbing/filter/types"
+	"github.com/airunny/filter/types"
 	"github.com/mohae/deepcopy"
 )
 

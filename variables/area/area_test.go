@@ -6,11 +6,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/liyanbing/filter/cache"
-	filterContext "github.com/liyanbing/filter/context"
-	_ "github.com/liyanbing/filter/location"
-	"github.com/liyanbing/filter/variables"
-	_ "github.com/liyanbing/filter/variables/ip"
+	"github.com/airunny/filter/cache"
+	filterContext "github.com/airunny/filter/context"
+	_ "github.com/airunny/filter/location"
+	"github.com/airunny/filter/variables"
+	_ "github.com/airunny/filter/variables/ip"
 	"github.com/stretchr/testify/assert"
 )
 

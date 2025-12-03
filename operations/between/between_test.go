@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/operations"
-	"github.com/liyanbing/filter/variables"
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/operations"
+	"github.com/airunny/filter/variables"
 	"github.com/stretchr/testify/assert"
 )
 

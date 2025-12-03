@@ -1,12 +1,12 @@
-module github.com/liyanbing/filter
+module github.com/airunny/filter
 
 go 1.21
 
 require (
 	github.com/liyanbing/calc v0.0.0-20200615034323-073f8dc291b4
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
-	github.com/oschwald/geoip2-golang v1.11.0
-	github.com/stretchr/testify v1.9.0
+	github.com/oschwald/geoip2-golang v1.13.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (

@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/liyanbing/filter/assignment"
-	_ "github.com/liyanbing/filter/assignment/delete"
-	_ "github.com/liyanbing/filter/assignment/set"
-	"github.com/liyanbing/filter/types"
+	"github.com/airunny/filter/assignment"
+	_ "github.com/airunny/filter/assignment/delete"
+	_ "github.com/airunny/filter/assignment/set"
+	"github.com/airunny/filter/types"
 )
 
 type Executor interface {

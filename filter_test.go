@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/liyanbing/filter/cache"
+	"github.com/airunny/filter/cache"
 	"github.com/stretchr/testify/assert"
 )
 

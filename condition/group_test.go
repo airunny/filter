@@ -6,12 +6,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/liyanbing/filter/cache"
-	_ "github.com/liyanbing/filter/operations/equal"
-	_ "github.com/liyanbing/filter/operations/greater_than"
-	_ "github.com/liyanbing/filter/operations/less_than"
-	_ "github.com/liyanbing/filter/variables/success"
-	_ "github.com/liyanbing/filter/variables/time"
+	"github.com/airunny/filter/cache"
+	_ "github.com/airunny/filter/operations/equal"
+	_ "github.com/airunny/filter/operations/greater_than"
+	_ "github.com/airunny/filter/operations/less_than"
+	_ "github.com/airunny/filter/variables/success"
+	_ "github.com/airunny/filter/variables/time"
 	"github.com/stretchr/testify/assert"
 )
 

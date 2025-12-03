@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/utils"
-	"github.com/liyanbing/filter/variables"
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/utils"
+	"github.com/airunny/filter/variables"
 )
 
 const Name = "data."

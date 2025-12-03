@@ -3,8 +3,8 @@ package success
 import (
 	"context"
 
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/variables"
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/variables"
 )
 
 const (

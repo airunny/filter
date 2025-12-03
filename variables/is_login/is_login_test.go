@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/liyanbing/filter/cache"
-	filterContext "github.com/liyanbing/filter/context"
-	_ "github.com/liyanbing/filter/location"
-	"github.com/liyanbing/filter/variables"
+	"github.com/airunny/filter/cache"
+	filterContext "github.com/airunny/filter/context"
+	_ "github.com/airunny/filter/location"
+	"github.com/airunny/filter/variables"
 	"github.com/stretchr/testify/assert"
 )
 

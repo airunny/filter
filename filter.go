@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/condition"
-	"github.com/liyanbing/filter/executor"
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/condition"
+	"github.com/airunny/filter/executor"
 )
 
 type Reporter interface {

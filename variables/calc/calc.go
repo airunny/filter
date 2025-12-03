@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/variables"
 	"github.com/liyanbing/calc/compute"
 	calcVariables "github.com/liyanbing/calc/variables"
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/variables"
 )
 
 const Name = "calc."

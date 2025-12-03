@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/liyanbing/filter/types"
+	"github.com/airunny/filter/types"
 
-	"github.com/liyanbing/filter/cache"
-	filterContext "github.com/liyanbing/filter/context"
-	"github.com/liyanbing/filter/variables"
+	"github.com/airunny/filter/cache"
+	filterContext "github.com/airunny/filter/context"
+	"github.com/airunny/filter/variables"
 )
 
 const Name = "is_login"

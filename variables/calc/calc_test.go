@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/liyanbing/filter/cache"
-	_ "github.com/liyanbing/filter/location"
-	"github.com/liyanbing/filter/variables"
-	_ "github.com/liyanbing/filter/variables/ctx"
+	"github.com/airunny/filter/cache"
+	_ "github.com/airunny/filter/location"
+	"github.com/airunny/filter/variables"
+	_ "github.com/airunny/filter/variables/ctx"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/location"
-	"github.com/liyanbing/filter/variables"
-	"github.com/liyanbing/filter/variables/ip"
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/location"
+	"github.com/airunny/filter/variables"
+	"github.com/airunny/filter/variables/ip"
 )
 
 const (

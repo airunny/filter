@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/types"
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/types"
 )
 
 func NewGroup(logic Logic) *Group {

@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/liyanbing/filter/assignment"
+	"github.com/airunny/filter/assignment"
 	"github.com/stretchr/testify/assert"
 )
 

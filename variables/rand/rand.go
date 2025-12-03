@@ -4,8 +4,8 @@ import (
 	"context"
 	"math/rand"
 
-	"github.com/liyanbing/filter/cache"
-	"github.com/liyanbing/filter/variables"
+	"github.com/airunny/filter/cache"
+	"github.com/airunny/filter/variables"
 )
 
 const Name = "rand"

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/liyanbing/filter/cache"
-	_ "github.com/liyanbing/filter/location"
-	"github.com/liyanbing/filter/variables"
+	"github.com/airunny/filter/cache"
+	_ "github.com/airunny/filter/location"
+	"github.com/airunny/filter/variables"
 	"github.com/stretchr/testify/assert"
 )
 
