@@ -29,12 +29,12 @@ func (s *Between) PrepareValue(value interface{}) (interface{}, error) {
 	return elements, nil
 }
 
-func (s *Between) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+func (s *Between) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
 	}
-	startAndEnd, ok := value.([]interface{})
+	startAndEnd, ok := operationValue.([]interface{})
 	if !ok {
 		return false, ErrInvalidOperationValue
 	}

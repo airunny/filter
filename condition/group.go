@@ -11,7 +11,7 @@ import (
 func NewGroup(logic Logic) *Group {
 	return &Group{
 		logic:      logic,
-		conditions: make([]Condition, 0),
+		conditions: make([]Condition, 0, 2),
 	}
 }
 

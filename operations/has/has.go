@@ -29,13 +29,13 @@ func (s *Has) PrepareValue(value interface{}) (interface{}, error) {
 	return targetValues, nil
 }
 
-func (s *Has) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+func (s *Has) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
 	}
 
-	targetValueElements, ok := value.([]interface{})
+	targetValueElements, ok := operationValue.([]interface{})
 	if !ok {
 		return false, ErrInvalidOperationValue
 	}

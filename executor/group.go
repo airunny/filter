@@ -9,7 +9,7 @@ import (
 
 func NewGroup() *Group {
 	return &Group{
-		executors: make([]Executor, 0),
+		executors: make([]Executor, 0, 2),
 	}
 }
 

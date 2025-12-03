@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/liyanbing/filter/assignment"
+	_ "github.com/liyanbing/filter/assignment/delete"
+	_ "github.com/liyanbing/filter/assignment/set"
 	"github.com/liyanbing/filter/types"
 )
 

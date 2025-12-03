@@ -60,8 +60,8 @@ func (s *MatchAny) PrepareValue(value interface{}) (interface{}, error) {
 	return elements, nil
 }
 
-func (s *MatchAny) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
-	elements, ok := value.([]interface{})
+func (s *MatchAny) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
+	elements, ok := operationValue.([]interface{})
 	if !ok {
 		return false, ErrInvalidOperationValue
 	}

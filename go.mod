@@ -2,8 +2,6 @@ module github.com/liyanbing/filter
 
 go 1.21
 
-toolchain go1.24.1
-
 require (
 	github.com/liyanbing/calc v0.0.0-20200615034323-073f8dc291b4
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826

@@ -29,14 +29,14 @@ func (s *In) PrepareValue(value interface{}) (interface{}, error) {
 	return targetValues, nil
 }
 
-func (s *In) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+func (s *In) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
 	}
 
 	variableValueElements := utils.ParseTargetArrayValue(variableValue)
-	if targetValues, ok := value.([]interface{}); ok {
+	if targetValues, ok := operationValue.([]interface{}); ok {
 		for _, variableValueElement := range variableValueElements {
 			exists := false
 			for _, targetValue := range targetValues {

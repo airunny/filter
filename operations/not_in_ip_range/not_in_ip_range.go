@@ -50,7 +50,7 @@ func (s *NotInIPRange) PrepareValue(value interface{}) (interface{}, error) {
 	return utils.IPRanges(ipRanges...)
 }
 
-func (s *NotInIPRange) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+func (s *NotInIPRange) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
@@ -61,7 +61,7 @@ func (s *NotInIPRange) Run(ctx context.Context, variable variables.Variable, val
 		return false, ErrInvalidVariableValue
 	}
 
-	targetValue, ok := value.([]utils.IPRange)
+	targetValue, ok := operationValue.([]utils.IPRange)
 	if !ok {
 		return false, ErrInvalidOperationValue
 	}

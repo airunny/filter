@@ -13,7 +13,7 @@ import (
 type Operation interface {
 	Name() string
 	PrepareValue(value interface{}) (interface{}, error)
-	Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error)
+	Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error)
 }
 
 type OriginValue struct{}

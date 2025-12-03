@@ -28,13 +28,13 @@ func (s *NotIn) PrepareValue(value interface{}) (interface{}, error) {
 	}
 	return targetValues, nil
 }
-func (s *NotIn) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+func (s *NotIn) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
 	}
 
-	if targetValues, ok := value.([]interface{}); ok {
+	if targetValues, ok := operationValue.([]interface{}); ok {
 		for _, targetValue := range targetValues {
 			if utils.ObjectCompare(variableValue, targetValue) == 0 {
 				return false, nil

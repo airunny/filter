@@ -47,7 +47,7 @@ func (s *Match) PrepareValue(value interface{}) (interface{}, error) {
 	return reg, nil
 }
 
-func (s *Match) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+func (s *Match) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
@@ -58,9 +58,9 @@ func (s *Match) Run(ctx context.Context, variable variables.Variable, value inte
 		return false, ErrInvalidVariableValue
 	}
 
-	if reg, ok := value.(*regexp.Regexp); ok {
+	if reg, ok := operationValue.(*regexp.Regexp); ok {
 		return reg.MatchString(targetVariableValue), nil
-	} else if targetValue, ok := value.(string); ok {
+	} else if targetValue, ok := operationValue.(string); ok {
 		return strings.Contains(targetVariableValue, targetValue), nil
 	} else {
 		return false, ErrInvalidOperationValue

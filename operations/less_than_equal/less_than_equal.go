@@ -20,10 +20,10 @@ type LessThanEqual struct {
 }
 
 func (s *LessThanEqual) Name() string { return s.name }
-func (s *LessThanEqual) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+func (s *LessThanEqual) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
 	}
-	return utils.ObjectCompare(variableValue, value) <= 0, nil
+	return utils.ObjectCompare(variableValue, operationValue) <= 0, nil
 }

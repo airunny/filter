@@ -20,10 +20,10 @@ type Equal struct {
 }
 
 func (s *Equal) Name() string { return s.name }
-func (s *Equal) Run(ctx context.Context, variable variables.Variable, value interface{}, data interface{}, cache *cache.Cache) (bool, error) {
+func (s *Equal) Run(ctx context.Context, variable variables.Variable, operationValue, data interface{}, cache *cache.Cache) (bool, error) {
 	variableValue, err := variables.GetValue(ctx, variable, data, cache)
 	if err != nil {
 		return false, err
 	}
-	return utils.ObjectCompare(variableValue, value) == 0, nil
+	return utils.ObjectCompare(variableValue, operationValue) == 0, nil
 }
