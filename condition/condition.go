@@ -4,17 +4,73 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/liyanbing/filter/cache"
 	"github.com/liyanbing/filter/operations"
+	"github.com/liyanbing/filter/types"
 	"github.com/liyanbing/filter/variables"
 
-	filterType "github.com/liyanbing/filter/filter_type"
+	// variables
+	_ "github.com/liyanbing/filter/variables/area"
+	_ "github.com/liyanbing/filter/variables/calc"
+	_ "github.com/liyanbing/filter/variables/channel"
+	_ "github.com/liyanbing/filter/variables/ctx"
+	_ "github.com/liyanbing/filter/variables/data"
+	_ "github.com/liyanbing/filter/variables/device"
+	_ "github.com/liyanbing/filter/variables/freq"
+	_ "github.com/liyanbing/filter/variables/ip"
+	_ "github.com/liyanbing/filter/variables/is_login"
+	_ "github.com/liyanbing/filter/variables/platform"
+	_ "github.com/liyanbing/filter/variables/rand"
+	_ "github.com/liyanbing/filter/variables/referer"
+	_ "github.com/liyanbing/filter/variables/success"
+	_ "github.com/liyanbing/filter/variables/time"
+	_ "github.com/liyanbing/filter/variables/ua"
+	_ "github.com/liyanbing/filter/variables/uid"
+	_ "github.com/liyanbing/filter/variables/user_tag"
+	_ "github.com/liyanbing/filter/variables/version"
+
+	// operations
+	_ "github.com/liyanbing/filter/operations/any"
+	_ "github.com/liyanbing/filter/operations/between"
+	_ "github.com/liyanbing/filter/operations/equal"
+	_ "github.com/liyanbing/filter/operations/greater_than"
+	_ "github.com/liyanbing/filter/operations/greater_than_equal"
+	_ "github.com/liyanbing/filter/operations/has"
+	_ "github.com/liyanbing/filter/operations/in"
+	_ "github.com/liyanbing/filter/operations/in_ip_range"
+	_ "github.com/liyanbing/filter/operations/less_than"
+	_ "github.com/liyanbing/filter/operations/less_than_equal"
+	_ "github.com/liyanbing/filter/operations/match"
+	_ "github.com/liyanbing/filter/operations/match_any"
+	_ "github.com/liyanbing/filter/operations/match_none"
+	_ "github.com/liyanbing/filter/operations/not"
+	_ "github.com/liyanbing/filter/operations/not_in"
+	_ "github.com/liyanbing/filter/operations/not_in_ip_range"
+	_ "github.com/liyanbing/filter/operations/not_match"
+	_ "github.com/liyanbing/filter/operations/version_greater_than"
+	_ "github.com/liyanbing/filter/operations/version_greater_than_equal"
+	_ "github.com/liyanbing/filter/operations/version_less_than"
+	_ "github.com/liyanbing/filter/operations/version_less_than_equal"
 )
 
-// ------------- base
 type Condition interface {
-	IsConditionOk(context.Context, interface{}, *cache.Cache) bool
+	IsConditionOk(context.Context, interface{}, *cache.Cache) (bool, error)
+}
+
+type Logic int
+
+const (
+	LogicAnd Logic = iota
+	LogicOr
+	LogicNot
+)
+
+var groupLogicKeys = map[string]Logic{
+	"and": LogicAnd,
+	"or":  LogicOr,
+	"not": LogicNot,
 }
 
 type BaseCondition struct {
@@ -23,141 +79,52 @@ type BaseCondition struct {
 	value     interface{}
 }
 
-func (s *BaseCondition) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) bool {
+func (s *BaseCondition) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) (bool, error) {
 	return s.operation.Run(ctx, s.variable, s.value, data, cache)
 }
 
-// -------------- group
-type LOGIC int
-
-const (
-	LOGIC_AND LOGIC = iota // 所有 Operation true
-	LOGIC_OR               // 只要有一个 Operation true
-	LOGIC_NOT              // 所有 Operation false
-)
-
-var groupConditionKeys = map[string]LOGIC{
-	"and": LOGIC_AND,
-	"or":  LOGIC_OR,
-	"not": LOGIC_NOT,
-}
-
-type GroupCondition struct {
-	logic      LOGIC
-	conditions []Condition
-}
-
-func NewGroupCondition(logic LOGIC) *GroupCondition {
-	return &GroupCondition{
-		logic:      logic,
-		conditions: make([]Condition, 0),
-	}
-}
-
-func (s *GroupCondition) add(condition Condition) {
-	s.conditions = append(s.conditions, condition)
-}
-
-func (s *GroupCondition) IsConditionOk(ctx context.Context, data interface{}, cache *cache.Cache) bool {
-	result := true
-
-	for _, condition := range s.conditions {
-		if ok := condition.IsConditionOk(ctx, data, cache); ok {
-			if s.logic == LOGIC_AND {
-				continue
-			}
-
-			if s.logic == LOGIC_OR {
-				result = true
-				break
-			}
-
-			if s.logic == LOGIC_NOT {
-				result = false
-				break
-			}
-		} else {
-			if s.logic == LOGIC_AND {
-				result = false
-				break
-			}
-
-			if s.logic == LOGIC_OR {
-				result = false
-				break
-			}
-
-			if s.logic == LOGIC_NOT {
-				continue
-			}
-		}
-	}
-
-	return result
-}
-
-// --------------
-func BuildGroupCondition(ctx context.Context, items []interface{}, logic LOGIC) (Condition, error) {
-	group := NewGroupCondition(logic)
-
-	for _, item := range items {
-		if !filterType.IsArray(item) {
-			return nil, errors.New("condition item is not array")
-		}
-
-		subCondition, err := BuildCondition(ctx, item.([]interface{}), LOGIC_AND)
-		if err != nil {
-			return nil, err
-		}
-		group.add(subCondition)
-	}
-
-	return group, nil
-}
-
-func BuildCondition(ctx context.Context, items []interface{}, logic LOGIC) (Condition, error) {
+func BuildCondition(ctx context.Context, items []interface{}, logic Logic) (Condition, error) {
 	if len(items) == 0 {
 		return nil, errors.New("condition is empty")
 	}
 
 	// group
-	if filterType.IsArray(items[0]) {
-		return BuildGroupCondition(ctx, items, logic)
+	if types.IsArray(items[0]) {
+		return BuildGroup(ctx, items, logic)
 	}
 
 	if len(items) != 3 {
-		return nil, errors.New("condition item must contains 3 element")
+		return nil, errors.New("condition item must contains three element")
 	}
 
-	if !filterType.IsString(items[0]) {
+	if !types.IsString(items[0]) {
 		return nil, fmt.Errorf("condition item 1st element[%v] is not string", items[0])
 	}
 
 	key := items[0].(string)
-	if logic, ok := groupConditionKeys[key]; ok {
-		if !filterType.IsArray(items[2]) {
+	if logicKey, ok := groupLogicKeys[strings.ToLower(key)]; ok {
+		if !types.IsArray(items[2]) {
 			return nil, fmt.Errorf("group condition [%s] 3rd element is not array", key)
 		}
-
-		return BuildCondition(ctx, items[2].([]interface{}), logic)
+		return BuildCondition(ctx, items[2].([]interface{}), logicKey)
 	}
 
-	variable := variables.Factory.Get(key)
-	if variable == nil {
-		return nil, fmt.Errorf("condition unknow var [%s]", key)
+	variable, ok := variables.Get(key)
+	if !ok {
+		return nil, fmt.Errorf("condition not exists variable [%s]", key)
 	}
 
-	if !filterType.IsString(items[1]) {
-		return nil, fmt.Errorf("condition item 2nd element[%g] is not string", items[1])
+	if !types.IsString(items[1]) {
+		return nil, fmt.Errorf("condition operation should be string [%v]", items[1])
 	}
 
 	operationName := items[1].(string)
-	operation := operations.Factory.Get(operationName)
-	if operation == nil {
-		return nil, fmt.Errorf("condition with invalid operation[%s]", operationName)
+	operation, ok := operations.Get(operationName)
+	if !ok {
+		return nil, fmt.Errorf("condition not exists operation [%s]", operationName)
 	}
 
-	prepayValue, err := operation.PrepareValue(items[2])
+	operationValue, err := operation.PrepareValue(items[2])
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +132,6 @@ func BuildCondition(ctx context.Context, items []interface{}, logic LOGIC) (Cond
 	return &BaseCondition{
 		variable:  variable,
 		operation: operation,
-		value:     prepayValue,
+		value:     operationValue,
 	}, nil
 }

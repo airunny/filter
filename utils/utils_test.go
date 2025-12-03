@@ -2,6 +2,7 @@ package utils
 
 import (
 	"math"
+	"net"
 	"reflect"
 	"testing"
 
@@ -43,56 +44,6 @@ func TestFloatEquals(t *testing.T) {
 
 	for i, v := range cases {
 		assert.Equal(t, v.Expected, FloatEquals(v.A, v.B), i)
-	}
-}
-
-type WeightMock struct {
-	Weight int64
-}
-
-func (s WeightMock) GetWeight() int64 {
-	return s.Weight
-}
-
-func TestTotalWeight(t *testing.T) {
-	weightArr := make([]IWeight, 0, 10)
-	total := int64(0)
-	for i := 0; i < 10; i++ {
-		total += int64(i)
-		weightArr = append(weightArr, &WeightMock{
-			Weight: int64(i),
-		})
-	}
-
-	assert.Equal(t, total, TotalWeight(weightArr))
-}
-
-func TestPickByWeight(t *testing.T) {
-	weightArr := make([]IWeight, 0, 10)
-	total := int64(0)
-	for i := 1; i <= 10; i++ {
-		total += int64(i)
-		weightArr = append(weightArr, &WeightMock{
-			Weight: int64(i),
-		})
-	}
-
-	pickCache := make(map[int]int)
-	totalCount := 100000
-	for i := 0; i < totalCount; i++ {
-		pickIndex := PickByWeight(weightArr, total)
-		pickIndex++
-		if _, ok := pickCache[pickIndex]; ok {
-			pickCache[pickIndex]++
-		} else {
-			pickCache[pickIndex] = 1
-		}
-	}
-
-	for k, v := range pickCache {
-		expected := float64(k) / float64(total)
-		got := float64(v) / float64(totalCount)
-		assert.Equal(t, true, (expected-got) < 1 && (got-expected) < 1)
 	}
 }
 
@@ -398,5 +349,289 @@ func TestGetObjectValueByKey(t *testing.T) {
 		ret, ok := GetObjectValueByKey(v.Data, v.Key)
 		assert.Equal(t, v.OK, ok, index)
 		assert.Equal(t, true, reflect.DeepEqual(v.Expected, ret))
+	}
+}
+
+func TestObjectCompare(t *testing.T) {
+	cases := []struct {
+		compare  interface{}
+		compared interface{}
+		expected int
+	}{
+		// int
+		{
+			compare:  1,
+			compared: 1,
+			expected: 0,
+		},
+		{
+			compare:  2,
+			compared: 1,
+			expected: 1,
+		},
+		{
+			compare:  1,
+			compared: 2,
+			expected: -1,
+		},
+		// float
+		{
+			compare:  1.0,
+			compared: 1.0,
+			expected: 0,
+		},
+		{
+			compare:  2.0,
+			compared: 1.0,
+			expected: 1,
+		},
+		{
+			compare:  1.0,
+			compared: 2.0,
+			expected: -1,
+		},
+		// float and int
+		{
+			compare:  1,
+			compared: 1.0,
+			expected: 0,
+		},
+		{
+			compare:  2,
+			compared: 1.0,
+			expected: 1,
+		},
+		{
+			compare:  1,
+			compared: 2.0,
+			expected: -1,
+		},
+		// string
+		{
+			compare:  "1",
+			compared: "1",
+			expected: 0,
+		},
+		{
+			compare:  "2",
+			compared: "1",
+			expected: 1,
+		},
+		{
+			compare:  "1",
+			compared: "2",
+			expected: -1,
+		},
+		// bool
+		{
+			compare:  true,
+			compared: true,
+			expected: 0,
+		},
+		{
+			compare:  1,
+			compared: false,
+			expected: 1,
+		},
+		{
+			compare:  false,
+			compared: 1.0,
+			expected: -1,
+		},
+		// arr
+		{
+			compare:  []string{"1", "2"},
+			compared: []string{"1", "2"},
+			expected: 0,
+		},
+		{
+			compare:  []string{"1", "2", "3"},
+			compared: []string{"1", "2"},
+			expected: 1,
+		},
+		{
+			compare:  []int{1, 2},
+			compared: []int{1, 2},
+			expected: 0,
+		},
+		{
+			compare:  []float64{1, 2},
+			compared: []float64{1, 2},
+			expected: 0,
+		},
+	}
+
+	for i, v := range cases {
+		assert.Equal(t, v.expected, ObjectCompare(v.compare, v.compared), i)
+	}
+}
+
+type Student struct {
+	Name string
+	Age  int
+}
+
+func TestClone(t *testing.T) {
+	stu := Student{
+		Name: "zhangsan",
+		Age:  18,
+	}
+
+	assert.Equal(t, true, reflect.DeepEqual(stu, Clone(stu)))
+}
+
+func TestVersionCompare(t *testing.T) {
+	cases := []struct {
+		Compare  string
+		Compared string
+		Result   int
+	}{
+		{
+			Compare:  "",
+			Compared: "",
+			Result:   0,
+		},
+		{
+			Compare:  "1",
+			Compared: "",
+			Result:   1,
+		},
+		{
+			Compare:  "",
+			Compared: "1",
+			Result:   -1,
+		},
+		{
+			Compare:  "1.1.1",
+			Compared: "1.1.1",
+			Result:   0,
+		},
+		{
+			Compare:  "1.2.1",
+			Compared: "1.1.1",
+			Result:   1,
+		},
+		{
+			Compare:  "1.1.1",
+			Compared: "1.2.1",
+			Result:   -1,
+		},
+		{
+			Compare:  "1.2.1",
+			Compared: "1.1.2",
+			Result:   1,
+		},
+		{
+			Compare:  "1.1.1.1",
+			Compared: "1.2.1",
+			Result:   -1,
+		},
+		{
+			Compare:  "1.1.1.0",
+			Compared: "1.1.1",
+			Result:   0,
+		},
+		{
+			Compare:  "1.1.1",
+			Compared: "1.1.1.0",
+			Result:   0,
+		},
+	}
+
+	for index, v := range cases {
+		assert.Equal(t, v.Result, VersionCompare(v.Compare, v.Compared), index)
+	}
+}
+
+func TestToInt(t *testing.T) {
+	ip := net.ParseIP("192.168.2.1")
+	expected := 192<<24 + 168<<16 + 2<<8 + 1
+	assert.Equal(t, expected, ToInt(ip))
+}
+
+func TestIntToIP(t *testing.T) {
+	cases := []struct {
+		IP string
+	}{
+		{
+			IP: "0.0.0.0",
+		},
+		{
+			IP: "192.168.2.1",
+		},
+		{
+			IP: "255.255.255.255",
+		},
+	}
+
+	for _, v := range cases {
+		assert.Equal(t, v.IP, IntToIP(ToInt(net.ParseIP(v.IP))).String())
+	}
+
+}
+
+func TestBytesNOT(t *testing.T) {
+	cases := []struct {
+		B        []byte
+		Expected []byte
+	}{
+		{
+			B:        []byte{0, 1, 2, 3, 4, 100, 200, 250, 255},
+			Expected: []byte{255 - 0, 255 - 1, 255 - 2, 255 - 3, 255 - 4, 255 - 100, 255 - 200, 255 - 250, 255 - 255},
+		},
+		{
+			B:        []byte{},
+			Expected: []byte{},
+		},
+		{
+			B:        []byte{255, 255, 255, 255, 255},
+			Expected: []byte{0, 0, 0, 0, 0},
+		},
+		{
+			B:        []byte{0, 0, 0, 0, 0},
+			Expected: []byte{255, 255, 255, 255, 255},
+		},
+	}
+
+	for _, v := range cases {
+		got := BytesNOT(v.B)
+		if !reflect.DeepEqual(v.Expected, got) {
+			t.Errorf("expected: %v,but Got:%v\n", v.Expected, got)
+		}
+	}
+}
+
+func TestBytesOR(t *testing.T) {
+	cases := []struct {
+		A []byte
+		B []byte
+	}{
+		{
+			A: []byte{1, 11, 20, 33, 50, 100, 200, 255, 254},
+			B: []byte{0, 255, 0, 100, 0, 255, 199, 233, 255},
+		},
+		{
+			A: []byte{},
+			B: []byte{},
+		},
+		{
+			A: []byte{255, 255, 255, 255, 255},
+			B: []byte{255, 255, 255, 255, 255},
+		},
+		{
+			A: []byte{0, 0, 0, 0, 0},
+			B: []byte{0, 0, 0, 0, 0},
+		},
+		{
+			A: []byte{255, 255, 255, 255, 255},
+			B: []byte{0, 0, 0, 0, 0},
+		},
+	}
+
+	for index, v := range cases {
+		got := BytesOR(v.A, v.B)
+		for j := 0; j < len(got); j++ {
+			assert.Equal(t, v.A[j]|v.B[j], got[j], index)
+		}
 	}
 }

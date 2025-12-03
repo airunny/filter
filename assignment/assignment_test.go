@@ -2,411 +2,86 @@ package assignment
 
 import (
 	"context"
-	"encoding/json"
-	"reflect"
+	"runtime/debug"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type Work struct {
-	WorkName string
+type mockAssignment struct {
+	name string
+	err  error
 }
 
-type User struct {
-	Name   string
-	Age    int8
-	IDCard string
-	Works  []*Work
+func (m mockAssignment) Name() string {
+	return m.name
 }
 
-type Temp struct {
-	User  *User
-	Tests []string
-	Merge map[string]interface{}
+func (m mockAssignment) PrepareValue(ctx context.Context, value interface{}) (interface{}, error) {
+	return value, nil
 }
 
-func TestEqual_Run(t *testing.T) {
-	structData := &Temp{
-		User: &User{
-			Name:   "zhangsan",
-			Age:    18,
-			IDCard: "110",
-			Works: []*Work{
-				{
-					WorkName: "operation",
-				},
-			},
-		},
-		Tests: []string{"1", "2"},
+func (m mockAssignment) Run(ctx context.Context, data interface{}, key string, val interface{}) error {
+	if m.err != nil {
+		return m.err
 	}
-
-	mapData := map[string]interface{}{"user": structData, "name": "张三", "age": 18, "citys": []string{"1", "2"}, "ages": []int64{1, 2}}
-	arrayData := []interface{}{structData, 1, "2", []int{1, 2}, []string{"1", "2"}}
-
-	cases := []struct {
-		Data     interface{}
-		Key      string
-		Value    interface{}
-		Expected interface{}
-		GotFunc  func() interface{}
-	}{
-		// map
-		{
-			Data:     mapData,
-			Key:      "name",
-			Value:    "李四",
-			Expected: "李四",
-			GotFunc: func() interface{} {
-				return mapData["name"]
-			},
-		},
-		{
-			Data:     mapData,
-			Key:      "age",
-			Value:    19,
-			Expected: 19,
-			GotFunc: func() interface{} {
-				return mapData["age"]
-			},
-		},
-		{
-			Data:     mapData,
-			Key:      "citys",
-			Value:    []string{"3", "4"},
-			Expected: []string{"3", "4"},
-			GotFunc: func() interface{} {
-				return mapData["citys"]
-			},
-		},
-		{
-			Data:     mapData,
-			Key:      "ages",
-			Value:    []int64{3, 4},
-			Expected: []int64{3, 4},
-			GotFunc: func() interface{} {
-				return mapData["ages"]
-			},
-		},
-		{
-			Data:     mapData,
-			Key:      "user.User.Name",
-			Value:    "zhangsan1",
-			Expected: "zhangsan1",
-			GotFunc: func() interface{} {
-				return structData.User.Name
-			},
-		},
-		{
-			Data: mapData,
-			Key:  "user.User",
-			Value: &User{
-				Name:   "user",
-				Age:    19,
-				IDCard: "120",
-				Works: []*Work{
-					{
-						WorkName: "operation1",
-					},
-				},
-			},
-			Expected: &User{
-				Name:   "user",
-				Age:    19,
-				IDCard: "120",
-				Works: []*Work{
-					{
-						WorkName: "operation1",
-					},
-				},
-			},
-			GotFunc: func() interface{} {
-				return structData.User
-			},
-		},
-		{
-			Data:     mapData,
-			Key:      "user.Tests",
-			Value:    []string{"3", "4"},
-			Expected: []string{"3", "4"},
-			GotFunc: func() interface{} {
-				return structData.Tests
-			},
-		},
-		{
-			Data:     mapData,
-			Key:      "user.User.Age",
-			Value:    29,
-			Expected: int8(29),
-			GotFunc: func() interface{} {
-				return structData.User.Age
-			},
-		},
-
-		// array
-		{
-			Data:     arrayData,
-			Key:      "0.User.Name",
-			Value:    "zhangsan2",
-			Expected: "zhangsan2",
-			GotFunc: func() interface{} {
-				return structData.User.Name
-			},
-		},
-		{
-			Data: arrayData,
-			Key:  "0.User",
-			Value: &User{
-				Name:   "user2",
-				Age:    20,
-				IDCard: "1200",
-				Works: []*Work{
-					{
-						WorkName: "operation2",
-					},
-				},
-			},
-			Expected: &User{
-				Name:   "user2",
-				Age:    20,
-				IDCard: "1200",
-				Works: []*Work{
-					{
-						WorkName: "operation2",
-					},
-				},
-			},
-			GotFunc: func() interface{} {
-				return structData.User
-			},
-		},
-		{
-			Data:     arrayData,
-			Key:      "0.Tests",
-			Value:    []string{"30", "40"},
-			Expected: []string{"30", "40"},
-			GotFunc: func() interface{} {
-				return structData.Tests
-			},
-		},
-		{
-			Data:     arrayData,
-			Key:      "0.User.Age",
-			Value:    40,
-			Expected: int8(40),
-			GotFunc: func() interface{} {
-				return structData.User.Age
-			},
-		},
-		{
-			Data:     arrayData,
-			Key:      "1",
-			Value:    10,
-			Expected: 10,
-			GotFunc: func() interface{} {
-				return arrayData[1]
-			},
-		},
-		{
-			Data:     arrayData,
-			Key:      "2",
-			Value:    "20",
-			Expected: "20",
-			GotFunc: func() interface{} {
-				return arrayData[2]
-			},
-		},
-		{
-			Data:     arrayData,
-			Key:      "3",
-			Value:    []int{3, 4},
-			Expected: []int{3, 4},
-			GotFunc: func() interface{} {
-				return arrayData[3]
-			},
-		},
-		{
-			Data:     arrayData,
-			Key:      "4",
-			Value:    []string{"3", "4"},
-			Expected: []string{"3", "4"},
-			GotFunc: func() interface{} {
-				return arrayData[4]
-			},
-		},
-
-		// ptr
-		{
-			Data:     structData,
-			Key:      "User.Name",
-			Value:    "golang",
-			Expected: "golang",
-			GotFunc: func() interface{} {
-				return structData.User.Name
-			},
-		},
-		{
-			Data:     structData,
-			Key:      "User.Age",
-			Value:    17,
-			Expected: int8(17),
-			GotFunc: func() interface{} {
-				return structData.User.Age
-			},
-		},
-		{
-			Data:     structData,
-			Key:      "User.IDCard",
-			Value:    "id_card",
-			Expected: "id_card",
-			GotFunc: func() interface{} {
-				return structData.User.IDCard
-			},
-		},
-		{
-			Data: structData,
-			Key:  "User",
-			Value: &User{
-				Name:   "golang1",
-				Age:    10,
-				IDCard: "2009",
-				Works: []*Work{
-					{
-						WorkName: "shanghai",
-					},
-				},
-			},
-			Expected: &User{
-				Name:   "golang1",
-				Age:    10,
-				IDCard: "2009",
-				Works: []*Work{
-					{
-						WorkName: "shanghai",
-					},
-				},
-			},
-			GotFunc: func() interface{} {
-				return structData.User
-			},
-		},
-		{
-			Data:     structData,
-			Key:      "User.Works.0.WorkName",
-			Value:    "suzhou",
-			Expected: "suzhou",
-			GotFunc: func() interface{} {
-				return structData.User.Works[0].WorkName
-			},
-		},
-		{
-			Data:     structData,
-			Key:      "Tests",
-			Value:    []string{"3", "4"},
-			Expected: []string{"3", "4"},
-			GotFunc: func() interface{} {
-				return structData.Tests
-			},
-		},
-	}
-
-	instance := &Set{}
-	for index, v := range cases {
-		prepayValue, err := instance.PrepareValue(context.Background(), v.Value)
-		assert.Equal(t, nil, err, index)
-		instance.Run(context.Background(), v.Data, v.Key, prepayValue)
-		if !reflect.DeepEqual(v.Expected, v.GotFunc()) {
-			t.Errorf("%v expected %v but got %v", index, v.Expected, v.GotFunc())
-		}
-	}
+	return nil
 }
 
-func TestMerge_Run(t *testing.T) {
-	data := &Temp{
-		Tests: []string{"1", "2"},
-		Merge: map[string]interface{}{"1": 1},
+func TestRegister(t *testing.T) {
+	f := func() {
+		Register(nil)
+	}
+	funcDidPanic, panicValue, _ := didPanic(f)
+	if !funcDidPanic {
+		t.Fatalf("func should panic\n\tPanic value:\t%#v", panicValue)
+	}
+	if panicValue != "cannot register a nil Assignment" {
+		t.Fatalf("panic error got %s want cannot register a nil Assignment", panicValue)
 	}
 
-	cases := []struct {
-		Data     interface{}
-		Key      string
-		Value    interface{}
-		Expected interface{}
-		GotFunc  func() interface{}
-	}{
-		{
-			Data:     data,
-			Key:      "Tests",
-			Value:    []string{"3", "4"},
-			Expected: []string{"1", "2", "3", "4"},
-			GotFunc: func() interface{} {
-				return data.Tests
-			},
-		},
-		{
-			Data:     data,
-			Key:      "Merge",
-			Value:    map[string]interface{}{"2": 2},
-			Expected: `{"1":1,"2":2}`,
-			GotFunc: func() interface{} {
-				str, _ := json.Marshal(data.Merge)
-				return string(str)
-			},
-		},
+	f = func() {
+		Register(mockAssignment{})
+	}
+	funcDidPanic, panicValue, _ = didPanic(f)
+	if !funcDidPanic {
+		t.Fatalf("func should panic\n\tPanic value:\t%#v", panicValue)
+	}
+	if panicValue != "cannot register Assignment with empty string result for Name()" {
+		t.Fatalf("panic error got %s want cannot register Assignment with empty string result for Name()", panicValue)
 	}
 
-	instance := &Merge{}
-	for index, v := range cases {
-		prepayValue, err := instance.PrepareValue(context.Background(), v.Value)
-		assert.Equal(t, nil, err, index)
-		instance.Run(context.Background(), v.Data, v.Key, prepayValue)
-		if !reflect.DeepEqual(v.Expected, v.GotFunc()) {
-			t.Errorf("%v expected %v but got %v", index, v.Expected, v.GotFunc())
-		}
+	op := mockAssignment{
+		name: "gt",
 	}
+	Register(op)
+	got, ok := Get("gt")
+	assert.True(t, ok)
+	if got != op {
+		t.Fatalf("Register(%v) want %v got %v", op, op, got)
+	}
+
+	got, ok = Get("lt")
+	assert.False(t, ok)
+	assert.Nil(t, got)
 }
 
-func TestDelete_Run(t *testing.T) {
-	data := &Temp{
-		Tests: []string{"0", "1", "2", "3", "4", "5"},
-		Merge: map[string]interface{}{"1": 1, "2": 2, "3": 3, "4": 4, "5": 5},
-	}
+type PanicTestFunc func()
 
-	cases := []struct {
-		Data     interface{}
-		Key      string
-		Value    interface{}
-		Expected interface{}
-		GotFunc  func() interface{}
-	}{
-		{
-			Data:     data,
-			Key:      "Tests",
-			Value:    []int{0, 2, 4, 6},
-			Expected: []string{"1", "3", "5"},
-			GotFunc: func() interface{} {
-				return data.Tests
-			},
-		},
-		{
-			Data:     data,
-			Key:      "Merge",
-			Value:    []string{"1", "3", "5", "7"},
-			Expected: `{"2":2,"4":4}`,
-			GotFunc: func() interface{} {
-				str, _ := json.Marshal(data.Merge)
-				return string(str)
-			},
-		},
-	}
+func didPanic(f PanicTestFunc) (bool, any, string) {
+	didPanic := false
+	var message any
+	var stack string
+	func() {
+		defer func() {
+			if message = recover(); message != nil {
+				didPanic = true
+				stack = string(debug.Stack())
+			}
+		}()
 
-	instance := &Delete{}
-	for index, v := range cases {
-		prepayValue, err := instance.PrepareValue(context.Background(), v.Value)
-		assert.Equal(t, nil, err, index)
-		instance.Run(context.Background(), v.Data, v.Key, prepayValue)
-		if !reflect.DeepEqual(v.Expected, v.GotFunc()) {
-			t.Errorf("%v expected %v but got %v", index, v.Expected, v.GotFunc())
-		}
-	}
+		// call the target function
+		f()
+	}()
+	return didPanic, message, stack
 }
